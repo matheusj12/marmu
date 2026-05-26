@@ -188,7 +188,7 @@ DECLARE
   v_role       text := 'admin';
   v_company    text;
   v_name       text;
-  v_master_email text := current_setting('app.master_email', TRUE);
+  v_master_email text := COALESCE(current_setting('app.master_email', TRUE), 'matheusjuliodeoliveira@gmail.com');
 BEGIN
   v_name    := COALESCE(NEW.raw_user_meta_data->>'name',    split_part(NEW.email, '@', 1));
   v_company := COALESCE(NEW.raw_user_meta_data->>'company', v_name || ' Marmoraria');
