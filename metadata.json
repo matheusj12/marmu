@@ -1,0 +1,6 @@
+{
+  "name": "Marmu 3D - Simulador de Mármores",
+  "description": "Visualizador 3D e modelador de pias, bancadas e escadas de mármore e granito em tempo real.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

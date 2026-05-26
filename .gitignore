@@ -1,0 +1,53 @@
+# Dependências
+node_modules/
+
+# Build
+dist/
+build/
+coverage/
+
+# Ambiente e Segredos (NUNCA commitar)
+.env
+.env.local
+.env.*.local
+*.key
+*.pem
+!.env.example
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+*.swp
+
+# Windows Zone.Identifier (arquivos baixados da internet)
+*.Zone.Identifier
+*:Zone.Identifier
+
+# Arquivos de mídia e documentos (usar Supabase Storage)
+*.zip
+*.pdf
+imagens do sistema/
+"imagens do sistema"/
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Vite
+.vite/
+
+# Testes
+coverage/
+playwright-report/
+test-results/
+
+# AIOX Local
+.aiox-core/local/
+.claude/settings.local.json
+.aiox/install-log.txt
