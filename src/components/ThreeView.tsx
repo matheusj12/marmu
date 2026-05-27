@@ -10,6 +10,7 @@ interface ThreeViewProps {
   staircase: StaircaseConfig;
   material: StoneMaterial;
   autoRotate: boolean;
+  readOnly?: boolean;
 }
 
 export default function ThreeView({
@@ -18,6 +19,7 @@ export default function ThreeView({
   staircase,
   material,
   autoRotate,
+  readOnly = false,
 }: ThreeViewProps) {
   // Center heights depending on object types
   const objectPositionY = type === 'pia' ? 0.2 : -0.2;

@@ -7,7 +7,8 @@ interface BudgetInvoiceProps {
   staircase: StaircaseConfig;
   material: StoneMaterial;
   quote: ClientQuote;
-  onClose: () => void;
+  onClose?: () => void;
+  readOnly?: boolean;
 }
 
 export default function BudgetInvoice({
@@ -17,6 +18,7 @@ export default function BudgetInvoice({
   material,
   quote,
   onClose,
+  readOnly = false,
 }: BudgetInvoiceProps) {
   
   // --- DETAILED PRICING COMPUTATIONS ---
@@ -110,18 +112,26 @@ export default function BudgetInvoice({
     window.print();
   };
 
+  const wrapperClass = readOnly
+    ? 'w-full'
+    : 'fixed inset-0 z-50 overflow-y-auto bg-black/80 backdrop-blur-md flex justify-center p-4 sm:p-6 print:p-0 print:bg-white print:relative print:inset-auto';
+
+  const innerClass = readOnly
+    ? 'w-full bg-[#121214] border border-white/10 rounded-3xl p-8 flex flex-col gap-8 shadow-2xl relative print:border-none print:shadow-none print:bg-white print:text-black print:p-0'
+    : 'w-full max-w-4xl bg-[#121214] border border-white/10 rounded-3xl p-8 flex flex-col gap-8 shadow-2xl relative print:border-none print:shadow-none print:bg-white print:text-black print:p-0';
+
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/80 backdrop-blur-md flex justify-center p-4 sm:p-6 print:p-0 print:bg-white print:relative print:inset-auto">
-      
-      <div className="w-full max-w-4xl bg-[#121214] border border-white/10 rounded-3xl p-8 flex flex-col gap-8 shadow-2xl relative print:border-none print:shadow-none print:bg-white print:text-black print:p-0">
-        
+    <div className={wrapperClass}>
+
+      <div className={innerClass}>
+
         {/* --- ACTIONS HEADER (Hidden on print) --- */}
         <div className="flex justify-between items-center bg-black/20 p-4 -mx-8 -mt-8 border-b border-white/10 rounded-t-3xl print:hidden">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
             <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-300 font-display">Proposta Comercial & Detalhes de Corte</h3>
           </div>
-          
+
           <div className="flex items-center gap-3">
             <button
               onClick={handlePrint}
@@ -129,12 +139,14 @@ export default function BudgetInvoice({
             >
               Imprimir / Salvar PDF
             </button>
-            <button
-              onClick={onClose}
-              className="bg-white/5 hover:bg-white/10 text-zinc-300 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer border border-white/5"
-            >
-              Fechar
-            </button>
+            {!readOnly && onClose && (
+              <button
+                onClick={onClose}
+                className="bg-white/5 hover:bg-white/10 text-zinc-300 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer border border-white/5"
+              >
+                Fechar
+              </button>
+            )}
           </div>
         </div>
 
