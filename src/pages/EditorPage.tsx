@@ -20,7 +20,8 @@ import {
   Phone,
   User,
   Info,
-  Link2
+  Link2,
+  ChevronLeft,
 } from 'lucide-react';
 
 import { STONE_MATERIALS } from '../materials';
@@ -41,6 +42,9 @@ export default function EditorPage() {
   // --- LINK PÚBLICO STATE ---
   const [generatedUrl, setGeneratedUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+
+  // --- SIDEBAR COLLAPSE ---
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   // --- CONFIG COUNTERTOP (Pia/Bancada) ---
   const [countertop, setCountertop] = useState<CountertopConfig>({
@@ -270,10 +274,14 @@ export default function EditorPage() {
       </header>
 
       {/* --- MAIN SPLIT INTERFACE WORKSPACE --- */}
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 p-6">
+      <div className="flex-1 flex gap-0 p-6 overflow-hidden">
 
-        {/* LEFT COLUMN: CONTROL AND PARAMS DASHBOARD PANEL (5Cols on Desktop) */}
-        <div className="lg:col-span-5 flex flex-col gap-6 overflow-y-auto max-h-[calc(100vh-120px)] pr-1">
+        {/* LEFT COLUMN: collapsible sidebar */}
+        <div className="flex shrink-0 items-start gap-2 mr-6">
+
+          {/* Sliding content panel */}
+          <div className={`transition-all duration-300 ease-in-out overflow-hidden ${sidebarOpen ? 'w-[400px]' : 'w-0'}`}>
+            <div className="w-[400px] flex flex-col gap-6 overflow-y-auto max-h-[calc(100vh-120px)] pr-1">
 
           {/* A. WORKPIECE TYPE TABS */}
           <div className="bg-black/40 border border-white/5 p-1 rounded-xl flex gap-1">
@@ -911,10 +919,22 @@ export default function EditorPage() {
             </div>
           </div>
 
+            </div>
+          </div>
+
+          {/* Toggle button */}
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            title={sidebarOpen ? 'Recolher painel' : 'Expandir painel'}
+            className="mt-1 w-6 h-10 shrink-0 bg-[#1e1e24] hover:bg-white/10 border border-white/10 rounded-lg flex items-center justify-center text-zinc-500 hover:text-white transition-all"
+          >
+            <ChevronLeft className={`w-3.5 h-3.5 transition-transform duration-300 ${sidebarOpen ? '' : 'rotate-180'}`} />
+          </button>
+
         </div>
 
-        {/* RIGHT COLUMN: 3D VIEWPORT, MATERIALS SELECTION & 2D BLUEPRINT VIEW */}
-        <div className="lg:col-span-7 flex flex-col gap-6">
+        {/* RIGHT COLUMN: 3D VIEWPORT & 2D BLUEPRINT VIEW */}
+        <div className="flex-1 flex flex-col gap-6 min-w-0">
 
           {/* 1. INTERACTIVE 3D STAGE */}
           <div className="h-[430px] sm:h-[480px] relative rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
