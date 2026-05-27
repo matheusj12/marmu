@@ -54,3 +54,12 @@ export interface ClientQuote {
   tax: number; // acréscimo / frete
   observations: string;
 }
+
+export interface ProposalSnapshot {
+  projectType: ProjectType;
+  countertop: CountertopConfig;
+  staircase: StaircaseConfig;
+  selectedMaterialId: string;
+  quote: ClientQuote;
+  createdAt: string; // ISO date
+}
