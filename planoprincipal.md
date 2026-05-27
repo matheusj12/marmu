@@ -200,6 +200,71 @@ Sprint 4 (finalização):
 
 ---
 
+## Funções Implementadas — Documentação Técnica
+
+### Exportar Orçamento
+
+**Arquivo:** `src/components/BudgetInvoice.tsx`  
+**Trigger:** Botão "Exportar Orçamento" no footer do editor → `setShowInvoice(true)` → monta `<BudgetInvoice>` como modal
+
+#### Fluxo completo
+
+```
+[Footer EditorPage]
+  └─ onClick → setShowInvoice(true)
+       └─ <BudgetInvoice type countertop staircase material quote onClose>
+            ├─ computations()         ← recalcula preços internamente
+            ├─ Renderiza documento
+            │    ├─ Cabeçalho: logo, Nº orçamento (6 dígitos aleatórios), data, validade 15 dias
+            │    ├─ Dados do cliente (nome, telefone, endereço do `quote`)
+            │    ├─ Material selecionado + tipo do projeto
+            │    ├─ Croqui 2D: <Editor2D> embutido a 90% de escala
+            │    └─ Tabela itemizada de valores
+            │         ├─ Área da pedra principal (m² × R$/m²)
+            │         ├─ Frontões/espelhos (ml × R$/ml) — se mlFrontao > 0
+            │         ├─ Saias de borda 45º (ml × R$/ml) — se mlSaia > 0
+            │         └─ Acabamento/recortes (cuba, cooktop, degraus) — se fabricationCost > 0
+            ├─ Resumo: subtotal → desconto → frete/instalação → TOTAL
+            └─ Botão "Imprimir / Salvar PDF" → window.print()
+```
+
+#### Impressão / PDF
+
+- `handlePrint()` chama `window.print()` — sem biblioteca externa (sem jsPDF, sem html2canvas)
+- Layout adapta via classes Tailwind `print:*`: fundo branco, texto preto, bordas em cinza
+- Browser abre diálogo nativo → usuário salva como PDF
+- `ThreeView` usa `gl={{ preserveDrawingBuffer: true }}` (preparado para captura de canvas futura, não usada ainda)
+
+#### Cálculo de preços (interno ao BudgetInvoice)
+
+`computations()` é função local em `BudgetInvoice.tsx` — **mais detalhada** que `calcBudgets.ts`:
+
+| Campo | Fórmula |
+|-------|---------|
+| `baseAreaM2` | `width × depth` (bancada) ou `steps × stepWidth × stepDepth + risers` (escada) |
+| `mlFrontao` | `width + depth×2` se frontões laterais ativos |
+| `mlSaia` | `width + depth×2` (frente + 2 lados) |
+| `stoneCost` | `baseAreaM2 × material.pricePerM2` |
+| `frontaoCost` | `mlFrontao × material.pricePerML_Frontao` |
+| `saiaCost` | `mlSaia × material.pricePerML_Saia` |
+| `fabricationCost` | Cuba R$150–450 + Cooktop R$120 (bancada) / R$40×degraus (escada) |
+| `total` | `subtotal − desconto + frete` |
+
+#### Dois modos de renderização
+
+| Prop | Onde usado | Comportamento |
+|------|-----------|---------------|
+| `readOnly=false` (default) | EditorPage | Modal `fixed inset-0 z-50`, botão "Fechar" visível |
+| `readOnly=true` | ProposalPage | Inline `w-full`, sem overlay, sem botão "Fechar" |
+
+#### Notas para evolução futura
+
+- O `quoteId` é gerado com `Math.floor(Math.random() * 900000)` — não persiste entre reloads. Ao implementar Supabase (Epic futura), usar ID sequencial do banco.
+- `computations()` duplica lógica de `calcBudgets.ts`. Ideal unificar em `calcBudgets.ts` com retorno expandido.
+- Story 5.1 do plano prevê upgrade para `html2canvas + jsPDF` para PDF com imagem 3D embutida.
+
+---
+
 ## Fluxo de Trabalho (Story Development Cycle)
 
 ```

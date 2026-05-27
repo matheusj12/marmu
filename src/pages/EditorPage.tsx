@@ -696,7 +696,81 @@ export default function EditorPage() {
 
           </div>
 
-          {/* C. CLIENT INVOICE METADATA INPUT CARD */}
+          {/* C. DIVERSE CATALOGUE OF STONE MATERIALS */}
+          <div className="bg-[#121214] border border-white/10 p-5 rounded-2xl flex flex-col gap-4 shadow-2xl">
+            <div className="flex flex-col gap-3 border-b border-white/10 pb-3">
+              <div className="flex items-center gap-2">
+                <Layers className="w-4 h-4 text-blue-500" />
+                <div>
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-300 font-display">
+                    Material & Acabamento
+                  </h3>
+                  <p className="text-[10px] text-zinc-500">Selecione para calibrar e projetar a textura do mineral no layout 3D</p>
+                </div>
+              </div>
+
+              <div className="flex bg-zinc-950 p-1 rounded-lg border border-white/10 gap-1 flex-wrap">
+                {[
+                  { id: 'todos', label: 'Todos' },
+                  { id: 'granito', label: 'Granito' },
+                  { id: 'marmore', label: 'Mármores' },
+                  { id: 'quartzo', label: 'Quartzos' },
+                  { id: 'ultra', label: 'Compactos' }
+                ].map(filterOpt => (
+                  <button
+                    key={filterOpt.id}
+                    onClick={() => setMaterialFilter(filterOpt.id)}
+                    className={`py-1 px-2.5 rounded text-[10px] font-bold uppercase transition-all cursor-pointer ${
+                      materialFilter === filterOpt.id ? 'bg-blue-600 text-white shadow' : 'text-zinc-500 hover:text-zinc-300'
+                    }`}
+                  >
+                    {filterOpt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              {filteredMaterials.map(mat => {
+                const isSelected = selectedMaterial.id === mat.id;
+                return (
+                  <button
+                    key={mat.id}
+                    onClick={() => setSelectedMaterial(mat)}
+                    className={`group bg-zinc-900 border text-left p-3.5 rounded-xl transition-all cursor-pointer flex flex-col justify-between h-24 ${
+                      isSelected
+                        ? 'border-2 border-blue-600 bg-blue-600/10 shadow-lg shadow-blue-500/10'
+                        : 'border-white/10 hover:border-zinc-700 hover:bg-[#1e1e24]/40'
+                    }`}
+                  >
+                    <div className="flex justify-between items-start w-full gap-2">
+                      <span className="text-[9px] uppercase font-bold text-zinc-500 select-none group-hover:text-blue-500 font-mono tracking-wide">{mat.category}</span>
+                      <div
+                        className="w-5 h-5 rounded-md border border-white/20 select-none relative flex items-center justify-center cursor-pointer shadow-inner shrink-0"
+                        style={{ backgroundColor: mat.color }}
+                      >
+                        {isSelected && <span className="w-1.5 h-1.5 bg-white rounded-full" />}
+                      </div>
+                    </div>
+                    <div>
+                      <h4 className="text-[11px] font-bold text-zinc-200 line-clamp-1 leading-normal group-hover:text-white">
+                        {mat.name}
+                      </h4>
+                      <span className="text-[10px] text-blue-400 font-mono font-bold block mt-0.5">
+                        R$ {mat.pricePerM2}/m²
+                      </span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            <p className="text-[11px] text-zinc-500 italic mt-1 bg-black/20 p-2.5 rounded-lg border border-white/5 font-mono text-center">
+              {selectedMaterial.name} — {selectedMaterial.category.toUpperCase()} · R$ {selectedMaterial.pricePerM2}/m²
+            </p>
+          </div>
+
+          {/* D. CLIENT INVOICE METADATA INPUT CARD */}
           <div className="bg-[#121214] border border-white/10 p-6 rounded-2xl flex flex-col gap-4 shadow-2xl">
 
             <div className="flex items-center gap-2 border-b border-white/10 pb-3">
@@ -904,83 +978,7 @@ export default function EditorPage() {
 
           </div>
 
-          {/* 2. DIVERSE CATALOGUE OF STONE MATERIALS */}
-          <div className="bg-[#121214] border border-white/10 p-5 rounded-2xl flex flex-col gap-4 shadow-2xl">
-            <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 border-b border-white/10 pb-3">
-              <div className="flex items-center gap-2">
-                <Layers className="w-4 h-4 text-blue-500" />
-                <div>
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-300 font-display">
-                    Material & Acabamento
-                  </h3>
-                  <p className="text-[10px] text-zinc-500">Selecione para calibrar e projetar a textura do mineral no layout 3D</p>
-                </div>
-              </div>
-
-              <div className="flex bg-zinc-950 p-1 rounded-lg border border-white/10 gap-1 shrink-0">
-                {[
-                  { id: 'todos', label: 'Todos' },
-                  { id: 'granito', label: 'Granito' },
-                  { id: 'marmore', label: 'Mármores' },
-                  { id: 'quartzo', label: 'Quartzos' },
-                  { id: 'ultra', label: 'Compactos' }
-                ].map(filterOpt => (
-                  <button
-                    key={filterOpt.id}
-                    onClick={() => setMaterialFilter(filterOpt.id)}
-                    className={`py-1 px-2.5 rounded text-[10px] font-bold uppercase transition-all cursor-pointer ${
-                      materialFilter === filterOpt.id ? 'bg-blue-605 bg-blue-600 text-white shadow' : 'text-zinc-500 hover:text-zinc-300'
-                    }`}
-                  >
-                    {filterOpt.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
-              {filteredMaterials.map(mat => {
-                const isSelected = selectedMaterial.id === mat.id;
-                return (
-                  <button
-                    key={mat.id}
-                    onClick={() => setSelectedMaterial(mat)}
-                    className={`group bg-zinc-900 border text-left p-3.5 rounded-xl transition-all cursor-pointer flex flex-col justify-between h-24 ${
-                      isSelected
-                        ? 'border-2 border-blue-600 bg-blue-600/10 shadow-lg shadow-blue-500/10'
-                        : 'border-white/10 hover:border-zinc-700 hover:bg-[#1e1e24]/40'
-                    }`}
-                  >
-                    <div className="flex justify-between items-start w-full gap-2">
-                      <span className="text-[9px] uppercase font-bold text-zinc-500 select-none group-hover:text-blue-500 font-mono tracking-wide">{mat.category}</span>
-                      <div
-                        className="w-5 h-5 rounded-md border border-white/20 select-none relative flex items-center justify-center cursor-pointer shadow-inner shrink-0"
-                        style={{ backgroundColor: mat.color }}
-                      >
-                        {isSelected && <span className="w-1.5 h-1.5 bg-white rounded-full" />}
-                      </div>
-                    </div>
-
-                    <div>
-                      <h4 className="text-[11px] font-bold text-zinc-200 line-clamp-1 leading-normal group-hover:text-white">
-                        {mat.name}
-                      </h4>
-                      <span className="text-[10px] text-blue-400 font-mono font-bold block mt-0.5">
-                        R$ {mat.pricePerM2}/m²
-                      </span>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-
-            <p className="text-[11px] text-zinc-500 italic mt-1 bg-black/20 p-2.5 rounded-lg border border-white/5 font-mono text-center">
-              {selectedMaterial.name} — mineral natural do tipo {selectedMaterial.category.toUpperCase()} com espessura de corte variável. Atualmente R$ {selectedMaterial.pricePerM2}/m² para chapa polida.
-            </p>
-
-          </div>
-
-          {/* 3. PRECISION 2D CAD SCHEMATICS */}
+          {/* 2. PRECISION 2D CAD SCHEMATICS */}
           <Editor2D
             type={projectType}
             countertop={countertop}
