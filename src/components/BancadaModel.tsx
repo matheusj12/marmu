@@ -393,7 +393,24 @@ export default function BancadaModel({ config, material }: BancadaModelProps) {
             );
           }
 
-          return null; // 'vao' + extras → handled by shape hole only
+          // ── Vão: inner walls showing stone thickness ───────────────
+          // Shape hole already cuts the geometry — these meshes render the
+          // cut faces so the stone thickness is visible from any angle.
+          if (tipo === 'vao') {
+            const void_mat = { color: '#06070a', roughness: 0.95, metalness: 0 };
+            const W = 0.002; // wall thickness (cosmetic only)
+            return (
+              <group key={cut.id} position={[wx, 0, wz]}>
+                <mesh position={[0,        t / 2,  wd / 2]}><boxGeometry args={[ww,     t, W]}   /><meshStandardMaterial {...void_mat} /></mesh>
+                <mesh position={[0,        t / 2, -wd / 2]}><boxGeometry args={[ww,     t, W]}   /><meshStandardMaterial {...void_mat} /></mesh>
+                <mesh position={[-ww / 2,  t / 2,  0]}     ><boxGeometry args={[W,      t, wd]}  /><meshStandardMaterial {...void_mat} /></mesh>
+                <mesh position={[ ww / 2,  t / 2,  0]}     ><boxGeometry args={[W,      t, wd]}  /><meshStandardMaterial {...void_mat} /></mesh>
+                <mesh position={[0,        0,       0]}     ><boxGeometry args={[ww,     W, wd]}  /><meshStandardMaterial {...void_mat} /></mesh>
+              </group>
+            );
+          }
+
+          return null; // extras (calha, ralo, duto, nicho) → shape hole only
         })}
       </group>
     );

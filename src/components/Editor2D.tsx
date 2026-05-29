@@ -16,6 +16,22 @@ const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v
 const edgeLen = (a: Vertex2D, b: Vertex2D) =>
   Math.round(Math.sqrt((b.x - a.x) ** 2 + (b.y - a.y) ** 2));
 
+// Ray-casting point-in-polygon test
+const pointInPoly = (px: number, py: number, poly: Vertex2D[]) => {
+  let inside = false;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const xi = poly[i].x, yi = poly[i].y, xj = poly[j].x, yj = poly[j].y;
+    if ((yi > py) !== (yj > py) && px < (xj - xi) * (py - yi) / (yj - yi) + xi)
+      inside = !inside;
+  }
+  return inside;
+};
+
+// Check if all 4 corners of a cutout rect are inside the polygon
+const cutoutInsidePoly = (cut: { x: number; y: number; w: number; h: number }, poly: Vertex2D[]) =>
+  [[cut.x, cut.y], [cut.x + cut.w, cut.y], [cut.x + cut.w, cut.y + cut.h], [cut.x, cut.y + cut.h]]
+    .every(([px, py]) => pointInPoly(px, py, poly));
+
 type RectDrag =
   | { type: 'width';   startMX: number; startVal: number }
   | { type: 'depth';   startMY: number; startVal: number }
@@ -446,6 +462,9 @@ export default function Editor2D({
                   const pw = cut.w * polyScale, ph = cut.h * polyScale;
                   const selected = selectedCutoutId === cut.id;
                   const isTorneira = tipo.startsWith('torneira');
+                  const isVao = tipo === 'vao';
+                  const isValid = !isVao || cutoutInsidePoly(cut, verts);
+                  const warnColor = '#f59e0b'; // amber for out-of-bounds
                   const corners: { key: 'tl'|'tr'|'br'|'bl'; cx: number; cy: number; cursor: string }[] = [
                     { key: 'tl', cx: px.x,       cy: px.y,      cursor: 'nwse-resize' },
                     { key: 'tr', cx: px.x + pw,  cy: px.y,      cursor: 'nesw-resize' },
@@ -465,14 +484,33 @@ export default function Editor2D({
                           onMouseDown={(e) => { e.preventDefault(); setSelectedCutoutId(cut.id); const { x, y } = svgCoords(e.clientX, e.clientY); drag.current = { type: 'cutout-move', id: cut.id, startMX: x, startMY: y, startC: { ...cut }, polyScale }; }}
                         />
                       ) : (
-                        <rect
-                          x={px.x} y={px.y} width={pw} height={ph}
-                          fill={sty.fill} stroke={selected ? '#fbbf24' : sty.stroke}
-                          strokeWidth={selected ? 2.5 : 1.5} strokeDasharray={sty.dash}
-                          style={{ cursor: 'move' }}
-                          onClick={(e) => { e.stopPropagation(); setSelectedCutoutId(cut.id); }}
-                          onMouseDown={(e) => { e.preventDefault(); setSelectedCutoutId(cut.id); const { x, y } = svgCoords(e.clientX, e.clientY); drag.current = { type: 'cutout-move', id: cut.id, startMX: x, startMY: y, startC: { ...cut }, polyScale }; }}
-                        />
+                        <>
+                          {/* Hatch pattern for vão out-of-bounds */}
+                          {isVao && !isValid && (
+                            <defs>
+                              <pattern id={`hatch-${cut.id}`} width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+                                <line x1="0" y1="0" x2="0" y2="6" stroke={warnColor} strokeWidth="1" opacity="0.4" />
+                              </pattern>
+                            </defs>
+                          )}
+                          <rect
+                            x={px.x} y={px.y} width={pw} height={ph}
+                            fill={isVao && !isValid ? `url(#hatch-${cut.id})` : sty.fill}
+                            stroke={selected ? '#fbbf24' : (!isValid ? warnColor : sty.stroke)}
+                            strokeWidth={selected ? 2.5 : (!isValid ? 2 : 1.5)}
+                            strokeDasharray={!isValid ? '4,2' : sty.dash}
+                            style={{ cursor: 'move' }}
+                            onClick={(e) => { e.stopPropagation(); setSelectedCutoutId(cut.id); }}
+                            onMouseDown={(e) => { e.preventDefault(); setSelectedCutoutId(cut.id); const { x, y } = svgCoords(e.clientX, e.clientY); drag.current = { type: 'cutout-move', id: cut.id, startMX: x, startMY: y, startC: { ...cut }, polyScale }; }}
+                          />
+                          {/* Out-of-bounds warning badge */}
+                          {isVao && !isValid && (
+                            <g style={{ pointerEvents: 'none' }}>
+                              <rect x={px.x + pw/2 - 22} y={px.y - 14} width="44" height="13" fill="#92400e" rx="3" opacity="0.95" />
+                              <text x={px.x + pw/2} y={px.y - 5} textAnchor="middle" fill="#fbbf24" style={{ fontSize: 8, fontWeight: 700 }}>⚠ fora da pedra</text>
+                            </g>
+                          )}
+                        </>
                       )}
                       {/* Cooktop burner rings */}
                       {(tipo.startsWith('cooktop') || tipo === 'inducao') && pw > 20 && (
