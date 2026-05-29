@@ -1,5 +1,5 @@
 import { useRef, useEffect, useCallback, useState } from 'react';
-import { CountertopConfig, StaircaseConfig, ProjectType, StoneMaterial, Vertex2D, Cutout2D } from '../types';
+import { CountertopConfig, StaircaseConfig, ProjectType, StoneMaterial, Vertex2D, Cutout2D, CutoutTipo } from '../types';
 
 interface Editor2DProps {
   type: ProjectType;
@@ -174,15 +174,27 @@ export default function Editor2D({
     const bh = Math.max(...ys) - Math.min(...ys);
     onCountertopChange({ ...countertop, width: clamp(snap(bw, SNAP), 60, 300), depth: clamp(snap(bh, SNAP), 40, 120), vertices: null });
   };
-  const addCutout = () => {
+  const CUTOUT_PRESETS: Record<CutoutTipo, { w: number; h: number; label: string }> = {
+    vao:      { w: 30,  h: 25, label: 'Vão'      },
+    cuba:     { w: 50,  h: 40, label: 'Cuba'     },
+    cooktop:  { w: 70,  h: 50, label: 'Cooktop'  },
+    torneira: { w: 8,   h: 8,  label: 'Torneira' },
+  };
+
+  const CUTOUT_STYLE: Record<CutoutTipo, { stroke: string; fill: string; text: string; dash: string }> = {
+    vao:      { stroke: '#f97316', fill: '#0f1115',  text: '#fb923c', dash: '5,3' },
+    cuba:     { stroke: '#38bdf8', fill: '#0c1929',  text: '#7dd3fc', dash: '4,3' },
+    cooktop:  { stroke: '#4ade80', fill: '#0a1a10',  text: '#86efac', dash: '4,2' },
+    torneira: { stroke: '#a78bfa', fill: '#110d1e',  text: '#c4b5fd', dash: '2,2' },
+  };
+
+  const addCutout = (tipo: CutoutTipo = 'vao') => {
     if (!onCountertopChange || verts.length < 3) return;
     const xs = verts.map(v => v.x), ys = verts.map(v => v.y);
-    const minX = Math.min(...xs), maxX = Math.max(...xs);
-    const minY = Math.min(...ys), maxY = Math.max(...ys);
-    const W = 30, H = 25; // tamanho padrão seguro
-    const cx = snap((minX + maxX) / 2 - W / 2, SNAP);
-    const cy = snap((minY + maxY) / 2 - H / 2, SNAP);
-    const newCutout: Cutout2D = { id: Date.now(), x: cx, y: cy, w: W, h: H, label: 'Vão' };
+    const { w: W, h: H, label } = CUTOUT_PRESETS[tipo];
+    const cx = snap((Math.min(...xs) + Math.max(...xs)) / 2 - W / 2, SNAP);
+    const cy = snap((Math.min(...ys) + Math.max(...ys)) / 2 - H / 2, SNAP);
+    const newCutout: Cutout2D = { id: Date.now(), x: cx, y: cy, w: W, h: H, label, tipo };
     onCountertopChange({ ...countertop, cutouts: [...(countertop.cutouts ?? []), newCutout] });
   };
   const removeCutout = (id: number) => {
@@ -265,13 +277,28 @@ export default function Editor2D({
         <div className="flex items-center gap-2">
           {/* Mode toggle */}
           {onCountertopChange && freeMode && (
-            <button
-              onClick={addCutout}
-              className="text-[9px] bg-orange-600 hover:bg-orange-500 text-white font-bold px-2.5 py-1 rounded border border-orange-400/30 transition-all cursor-pointer"
-              title="Adicionar vão/recorte interno"
-            >
-              + Vão
-            </button>
+            <div className="flex items-center gap-1.5">
+              <button onClick={() => addCutout('vao')}
+                className="text-[9px] bg-orange-600 hover:bg-orange-500 text-white font-bold px-2.5 py-1 rounded border border-orange-500/30 transition-all cursor-pointer"
+                title="Vão estrutural — abertura na pedra">
+                + Vão
+              </button>
+              <button onClick={() => addCutout('cuba')}
+                className="text-[9px] bg-sky-600 hover:bg-sky-500 text-white font-bold px-2.5 py-1 rounded border border-sky-500/30 transition-all cursor-pointer"
+                title="Recorte para cuba (50×40cm padrão)">
+                + Cuba
+              </button>
+              <button onClick={() => addCutout('cooktop')}
+                className="text-[9px] bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-2.5 py-1 rounded border border-emerald-500/30 transition-all cursor-pointer"
+                title="Recorte para cooktop (70×50cm padrão)">
+                + Cooktop
+              </button>
+              <button onClick={() => addCutout('torneira')}
+                className="text-[9px] bg-violet-600 hover:bg-violet-500 text-white font-bold px-2.5 py-1 rounded border border-violet-500/30 transition-all cursor-pointer"
+                title="Furo para torneira (⌀ 8cm)">
+                + Torneira
+              </button>
+            </div>
           )}
           <span className="text-[9px] bg-purple-500/10 text-purple-400 border border-purple-500/20 font-mono px-2 py-1 rounded">
             Arraste vértices · clique aresta p/ adicionar · 2× p/ remover
@@ -334,62 +361,80 @@ export default function Editor2D({
                   );
                 })}
 
-                {/* ── Cutout (vão) handles ── */}
+                {/* ── Cutouts ── */}
                 {(countertop.cutouts ?? []).map(cut => {
+                  const tipo = cut.tipo ?? 'vao';
+                  const sty = CUTOUT_STYLE[tipo];
                   const px = toPx({ x: cut.x, y: cut.y });
                   const pw = cut.w * polyScale, ph = cut.h * polyScale;
+                  const selected = selectedCutoutId === cut.id;
+                  const isTorneira = tipo === 'torneira';
                   const corners: { key: 'tl'|'tr'|'br'|'bl'; cx: number; cy: number; cursor: string }[] = [
-                    { key: 'tl', cx: px.x,       cy: px.y,       cursor: 'nwse-resize' },
-                    { key: 'tr', cx: px.x + pw,   cy: px.y,       cursor: 'nesw-resize' },
-                    { key: 'br', cx: px.x + pw,   cy: px.y + ph,  cursor: 'nwse-resize' },
-                    { key: 'bl', cx: px.x,         cy: px.y + ph,  cursor: 'nesw-resize' },
+                    { key: 'tl', cx: px.x,       cy: px.y,      cursor: 'nwse-resize' },
+                    { key: 'tr', cx: px.x + pw,  cy: px.y,      cursor: 'nesw-resize' },
+                    { key: 'br', cx: px.x + pw,  cy: px.y + ph, cursor: 'nwse-resize' },
+                    { key: 'bl', cx: px.x,        cy: px.y + ph, cursor: 'nesw-resize' },
                   ];
                   return (
                     <g key={`cut-${cut.id}`}>
-                      {/* Fill — clipped out visually */}
-                      <rect
-                        x={px.x} y={px.y} width={pw} height={ph}
-                        fill="#0f1115"
-                        stroke={selectedCutoutId === cut.id ? '#fbbf24' : '#f97316'}
-                        strokeWidth={selectedCutoutId === cut.id ? 2.5 : 1.5}
-                        strokeDasharray="5,3"
-                        style={{ cursor: 'move' }}
-                        onClick={(e) => { e.stopPropagation(); setSelectedCutoutId(cut.id); }}
-                        onMouseDown={(e) => {
-                          e.preventDefault();
-                          setSelectedCutoutId(cut.id);
-                          const { x, y } = svgCoords(e.clientX, e.clientY);
-                          drag.current = { type: 'cutout-move', id: cut.id, startMX: x, startMY: y, startC: { ...cut }, polyScale };
-                        }}
-                      />
-                      {selectedCutoutId === cut.id && (
-                        <text x={px.x + pw/2} y={px.y - 6} textAnchor="middle" fill="#fbbf24" style={{ fontSize: 8, fontWeight: 700, pointerEvents: 'none' }}>
-                          ⌫ Delete para remover
-                        </text>
+                      {/* Shape: circle for torneira, rect for others */}
+                      {isTorneira ? (
+                        <circle
+                          cx={px.x + pw/2} cy={px.y + ph/2} r={pw/2}
+                          fill={sty.fill} stroke={selected ? '#fbbf24' : sty.stroke}
+                          strokeWidth={selected ? 2.5 : 1.5} strokeDasharray={sty.dash}
+                          style={{ cursor: 'move' }}
+                          onClick={(e) => { e.stopPropagation(); setSelectedCutoutId(cut.id); }}
+                          onMouseDown={(e) => { e.preventDefault(); setSelectedCutoutId(cut.id); const { x, y } = svgCoords(e.clientX, e.clientY); drag.current = { type: 'cutout-move', id: cut.id, startMX: x, startMY: y, startC: { ...cut }, polyScale }; }}
+                        />
+                      ) : (
+                        <rect
+                          x={px.x} y={px.y} width={pw} height={ph}
+                          fill={sty.fill} stroke={selected ? '#fbbf24' : sty.stroke}
+                          strokeWidth={selected ? 2.5 : 1.5} strokeDasharray={sty.dash}
+                          style={{ cursor: 'move' }}
+                          onClick={(e) => { e.stopPropagation(); setSelectedCutoutId(cut.id); }}
+                          onMouseDown={(e) => { e.preventDefault(); setSelectedCutoutId(cut.id); const { x, y } = svgCoords(e.clientX, e.clientY); drag.current = { type: 'cutout-move', id: cut.id, startMX: x, startMY: y, startC: { ...cut }, polyScale }; }}
+                        />
                       )}
-                      {/* Label + remove button */}
-                      <text x={px.x + pw/2} y={px.y + ph/2 - 4} textAnchor="middle" fill="#fb923c" style={{ fontSize: 9, fontWeight: 700, pointerEvents: 'none' }}>
-                        {cut.label ?? 'Vão'}
-                      </text>
-                      <text x={px.x + pw/2} y={px.y + ph/2 + 8} textAnchor="middle" fill="#64748b" style={{ fontSize: 8, pointerEvents: 'none' }}>
-                        {cut.w}×{cut.h} cm
-                      </text>
+                      {/* Cooktop burner rings */}
+                      {tipo === 'cooktop' && pw > 20 && (
+                        <g style={{ pointerEvents: 'none' }}>
+                          <circle cx={px.x + pw*0.3} cy={px.y + ph/2} r={Math.min(pw,ph)*0.12} fill="none" stroke={sty.stroke} strokeWidth="0.8" opacity="0.5" />
+                          <circle cx={px.x + pw*0.7} cy={px.y + ph/2} r={Math.min(pw,ph)*0.14} fill="none" stroke={sty.stroke} strokeWidth="0.8" opacity="0.5" />
+                          <circle cx={px.x + pw*0.5} cy={px.y + ph*0.3} r={Math.min(pw,ph)*0.1} fill="none" stroke={sty.stroke} strokeWidth="0.8" opacity="0.4" />
+                          <circle cx={px.x + pw*0.5} cy={px.y + ph*0.7} r={Math.min(pw,ph)*0.1} fill="none" stroke={sty.stroke} strokeWidth="0.8" opacity="0.4" />
+                        </g>
+                      )}
+                      {/* Cuba inner lip */}
+                      {tipo === 'cuba' && pw > 12 && (
+                        <rect x={px.x+3} y={px.y+3} width={pw-6} height={ph-6} fill="none" stroke={sty.stroke} strokeWidth="0.6" opacity="0.4" rx="2" style={{ pointerEvents: 'none' }} />
+                      )}
+                      {/* Delete hint */}
+                      {selected && (
+                        <text x={px.x + pw/2} y={px.y - 7} textAnchor="middle" fill="#fbbf24" style={{ fontSize: 8, fontWeight: 700, pointerEvents: 'none' }}>⌫ Delete</text>
+                      )}
+                      {/* Label */}
+                      {!isTorneira && (
+                        <>
+                          <text x={px.x + pw/2} y={px.y + ph/2 - 4} textAnchor="middle" fill={sty.text} style={{ fontSize: 9, fontWeight: 700, pointerEvents: 'none' }}>{cut.label}</text>
+                          <text x={px.x + pw/2} y={px.y + ph/2 + 8} textAnchor="middle" fill="#64748b" style={{ fontSize: 7, pointerEvents: 'none' }}>{cut.w}×{cut.h} cm</text>
+                        </>
+                      )}
+                      {isTorneira && (
+                        <text x={px.x + pw/2} y={px.y + ph/2 + pw/2 + 10} textAnchor="middle" fill={sty.text} style={{ fontSize: 7, fontWeight: 700, pointerEvents: 'none' }}>⌀ {cut.w}cm</text>
+                      )}
                       {/* × remove */}
                       <g onClick={() => removeCutout(cut.id)} style={{ cursor: 'pointer' }}>
-                        <circle cx={px.x + pw - 6} cy={px.y + 6} r={7} fill="#ef4444" opacity="0.85" />
-                        <text x={px.x + pw - 6} y={px.y + 10} textAnchor="middle" fill="#fff" style={{ fontSize: 10, fontWeight: 700, pointerEvents: 'none' }}>×</text>
+                        <circle cx={px.x + pw - 5} cy={px.y + 5} r={6} fill="#ef4444" opacity="0.9" />
+                        <text x={px.x + pw - 5} y={px.y + 9} textAnchor="middle" fill="#fff" style={{ fontSize: 9, fontWeight: 700, pointerEvents: 'none' }}>×</text>
                       </g>
-                      {/* Corner resize handles */}
-                      {corners.map(co => (
-                        <circle
-                          key={co.key} cx={co.cx} cy={co.cy} r={5}
-                          fill="#f97316" stroke="#fff" strokeWidth="1" opacity="0.9"
+                      {/* Corner resize handles (not for torneira) */}
+                      {!isTorneira && corners.map(co => (
+                        <circle key={co.key} cx={co.cx} cy={co.cy} r={4}
+                          fill={sty.stroke} stroke="#fff" strokeWidth="1" opacity="0.9"
                           style={{ cursor: co.cursor }}
-                          onMouseDown={(e) => {
-                            e.preventDefault();
-                            const { x, y } = svgCoords(e.clientX, e.clientY);
-                            drag.current = { type: 'cutout-resize', id: cut.id, corner: co.key, startMX: x, startMY: y, startC: { ...cut }, polyScale };
-                          }}
+                          onMouseDown={(e) => { e.preventDefault(); const { x, y } = svgCoords(e.clientX, e.clientY); drag.current = { type: 'cutout-resize', id: cut.id, corner: co.key, startMX: x, startMY: y, startC: { ...cut }, polyScale }; }}
                         />
                       ))}
                     </g>

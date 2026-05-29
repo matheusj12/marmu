@@ -15,8 +15,9 @@ export interface StoneMaterial {
   specular?: string;
 }
 
+export type CutoutTipo = 'vao' | 'cuba' | 'cooktop' | 'torneira';
 export interface Vertex2D { x: number; y: number; } // em cm
-export interface Cutout2D { id: number; x: number; y: number; w: number; h: number; label?: string; } // vão em cm
+export interface Cutout2D { id: number; x: number; y: number; w: number; h: number; label?: string; tipo?: CutoutTipo; } // recorte em cm
 
 export interface CountertopConfig {
   width: number;       // em cm
