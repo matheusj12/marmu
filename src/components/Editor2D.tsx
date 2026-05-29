@@ -1,4 +1,4 @@
-import { useRef, useEffect, useCallback } from 'react';
+import { useRef, useEffect, useCallback, useState } from 'react';
 import { CountertopConfig, StaircaseConfig, ProjectType, StoneMaterial, Vertex2D, Cutout2D } from '../types';
 
 interface Editor2DProps {
@@ -43,6 +43,7 @@ export default function Editor2D({
   const polyLayout = useRef({ scale: RECT_SCALE, ox: 0, oy: 0 });
 
   const freeMode = !!(countertop.vertices && countertop.vertices.length >= 3);
+  const [selectedCutoutId, setSelectedCutoutId] = useState<number | null>(null);
 
   // ── Coordinate helpers ─────────────────────────────────────────────────
   const svgCoords = useCallback((clientX: number, clientY: number) => {
@@ -146,6 +147,19 @@ export default function Editor2D({
     document.addEventListener('mouseup', onUp);
     return () => { document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); };
   }, [countertop, onCountertopChange, rScale, svgCoords]);
+
+  // ── Keyboard: Delete/Backspace removes selected cutout ─────────────────
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.key === 'Delete' || e.key === 'Backspace') && selectedCutoutId !== null && onCountertopChange) {
+        onCountertopChange({ ...countertop, cutouts: (countertop.cutouts ?? []).filter(c => c.id !== selectedCutoutId) });
+        setSelectedCutoutId(null);
+      }
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCutoutId, countertop, onCountertopChange]);
 
   // ── Mode toggles ───────────────────────────────────────────────────────
   const enterFreeMode = () => {
@@ -289,7 +303,7 @@ export default function Editor2D({
       </div>
 
       <div className="w-full overflow-x-auto flex justify-center">
-        <svg ref={svgRef} width={SVG_W} height={SVG_H} style={{ minWidth: '500px', cursor: 'default' }}>
+        <svg ref={svgRef} width={SVG_W} height={SVG_H} style={{ minWidth: '500px', cursor: 'default' }} onClick={() => setSelectedCutoutId(null)}>
           <defs>
             <pattern id="cadGrid" width="20" height="20" patternUnits="userSpaceOnUse">
               <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#fff" strokeWidth="0.5" strokeOpacity="0.04" />
@@ -357,14 +371,24 @@ export default function Editor2D({
                       {/* Fill — clipped out visually */}
                       <rect
                         x={px.x} y={px.y} width={pw} height={ph}
-                        fill="#0f1115" stroke="#f97316" strokeWidth="1.5" strokeDasharray="5,3"
+                        fill="#0f1115"
+                        stroke={selectedCutoutId === cut.id ? '#fbbf24' : '#f97316'}
+                        strokeWidth={selectedCutoutId === cut.id ? 2.5 : 1.5}
+                        strokeDasharray="5,3"
                         style={{ cursor: 'move' }}
+                        onClick={(e) => { e.stopPropagation(); setSelectedCutoutId(cut.id); }}
                         onMouseDown={(e) => {
                           e.preventDefault();
+                          setSelectedCutoutId(cut.id);
                           const { x, y } = svgCoords(e.clientX, e.clientY);
                           drag.current = { type: 'cutout-move', id: cut.id, startMX: x, startMY: y, startC: { ...cut }, polyScale };
                         }}
                       />
+                      {selectedCutoutId === cut.id && (
+                        <text x={px.x + pw/2} y={px.y - 6} textAnchor="middle" fill="#fbbf24" style={{ fontSize: 8, fontWeight: 700, pointerEvents: 'none' }}>
+                          ⌫ Delete para remover
+                        </text>
+                      )}
                       {/* Label + remove button */}
                       <text x={px.x + pw/2} y={px.y + ph/2 - 4} textAnchor="middle" fill="#fb923c" style={{ fontSize: 9, fontWeight: 700, pointerEvents: 'none' }}>
                         {cut.label ?? 'Vão'}
