@@ -305,132 +305,91 @@ export default function EditorPage() {
 
             {projectType === 'pia' ? (
               // --- COUNTERTOP PARAMS ---
-              <div className="space-y-6">
+              <div className="space-y-3">
 
-                <h3 className="text-[10px] font-bold text-zinc-520 text-zinc-500 uppercase tracking-[0.2em]">Dimensões Técnicas</h3>
-
-                {/* 1. Largura & Profundidade sliders */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <label className="text-xs font-medium text-zinc-400">Largura Total</label>
-                      <div className="flex items-center gap-1">
+                {/* Helper component inline — field row */}
+                {/* Largura + Profundidade */}
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { label: 'Largura', key: 'width',  min: 60,  max: 300, step: 5  },
+                    { label: 'Profund.', key: 'depth',  min: 40,  max: 120, step: 5  },
+                  ].map(f => (
+                    <div key={f.key} className="bg-zinc-900/60 border border-white/8 rounded-xl p-3 flex flex-col gap-2">
+                      <span className="text-[10px] text-zinc-500 uppercase font-bold tracking-wider">{f.label}</span>
+                      <div className="flex items-center gap-1.5">
                         <input
-                          type="number" min={60} max={300} step={5}
-                          value={countertop.width}
-                          onChange={e => setCountertop({ ...countertop, width: Math.min(300, Math.max(60, Number(e.target.value))) })}
-                          className="w-16 text-xs bg-zinc-900 border border-white/10 px-2 py-0.5 rounded font-mono text-blue-400 focus:outline-none focus:border-blue-500 text-right"
+                          type="number" min={f.min} max={f.max} step={f.step}
+                          value={(countertop as any)[f.key]}
+                          onChange={e => setCountertop({ ...countertop, [f.key]: Math.min(f.max, Math.max(f.min, Number(e.target.value))) })}
+                          className="flex-1 w-0 text-base font-mono font-bold text-blue-400 bg-transparent border-none outline-none text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         />
-                        <span className="text-xs text-zinc-500">cm</span>
+                        <span className="text-xs text-zinc-500 shrink-0">cm</span>
                       </div>
+                      <input
+                        type="range" min={f.min} max={f.max} step={f.step}
+                        value={(countertop as any)[f.key]}
+                        onChange={e => setCountertop({ ...countertop, [f.key]: Number(e.target.value) })}
+                        className="w-full h-1 accent-blue-500 cursor-pointer"
+                      />
                     </div>
-                    <input
-                      type="range" min={60} max={300} step={5} value={countertop.width}
-                      onChange={e => setCountertop({ ...countertop, width: Number(e.target.value) })}
-                      className="w-full h-1.5 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-blue-600"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <label className="text-xs font-medium text-zinc-400">Profundidade</label>
-                      <div className="flex items-center gap-1">
-                        <input
-                          type="number" min={40} max={120} step={5}
-                          value={countertop.depth}
-                          onChange={e => setCountertop({ ...countertop, depth: Math.min(120, Math.max(40, Number(e.target.value))) })}
-                          className="w-16 text-xs bg-zinc-900 border border-white/10 px-2 py-0.5 rounded font-mono text-blue-400 focus:outline-none focus:border-blue-500 text-right"
-                        />
-                        <span className="text-xs text-zinc-500">cm</span>
-                      </div>
-                    </div>
-                    <input
-                      type="range" min={40} max={120} step={5} value={countertop.depth}
-                      onChange={e => setCountertop({ ...countertop, depth: Number(e.target.value) })}
-                      className="w-full h-1.5 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-blue-600"
-                    />
-                  </div>
+                  ))}
                 </div>
 
-                {/* 2. Frontão & Saia adjustments */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border-t border-white/10 pt-4">
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <label className="text-xs font-medium text-zinc-400">Frontão (Espelho)</label>
-                      <div className="flex items-center gap-1">
+                {/* Frontão + Saia */}
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { label: 'Frontão',  key: 'frontaoHeight', min: 0, max: 20, step: 1 },
+                    { label: 'Saia',     key: 'saiaHeight',    min: 0, max: 15, step: 1 },
+                  ].map(f => (
+                    <div key={f.key} className="bg-zinc-900/60 border border-white/8 rounded-xl p-3 flex flex-col gap-2">
+                      <span className="text-[10px] text-zinc-500 uppercase font-bold tracking-wider">{f.label}</span>
+                      <div className="flex items-center gap-1.5">
                         <input
-                          type="number" min={0} max={20} step={1}
-                          value={countertop.frontaoHeight}
-                          onChange={e => setCountertop({ ...countertop, frontaoHeight: Math.min(20, Math.max(0, Number(e.target.value))) })}
-                          className="w-14 text-xs bg-zinc-900 border border-white/10 px-2 py-0.5 rounded font-mono text-blue-400 focus:outline-none focus:border-blue-500 text-right"
+                          type="number" min={f.min} max={f.max} step={f.step}
+                          value={(countertop as any)[f.key]}
+                          onChange={e => setCountertop({ ...countertop, [f.key]: Math.min(f.max, Math.max(f.min, Number(e.target.value))) })}
+                          className="flex-1 w-0 text-base font-mono font-bold text-blue-400 bg-transparent border-none outline-none text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         />
-                        <span className="text-xs text-zinc-500">cm</span>
+                        <span className="text-xs text-zinc-500 shrink-0">cm</span>
                       </div>
+                      <input
+                        type="range" min={f.min} max={f.max} step={f.step}
+                        value={(countertop as any)[f.key]}
+                        onChange={e => setCountertop({ ...countertop, [f.key]: Number(e.target.value) })}
+                        className="w-full h-1 accent-blue-500 cursor-pointer"
+                      />
                     </div>
-                    <input
-                      type="range" min={0} max={20} step={1} value={countertop.frontaoHeight}
-                      onChange={e => setCountertop({ ...countertop, frontaoHeight: Number(e.target.value) })}
-                      className="w-full h-1.5 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-blue-600"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <label className="text-xs font-medium text-zinc-400">Saia (Avental)</label>
-                      <div className="flex items-center gap-1">
-                        <input
-                          type="number" min={0} max={15} step={1}
-                          value={countertop.saiaHeight}
-                          onChange={e => setCountertop({ ...countertop, saiaHeight: Math.min(15, Math.max(0, Number(e.target.value))) })}
-                          className="w-14 text-xs bg-zinc-900 border border-white/10 px-2 py-0.5 rounded font-mono text-blue-400 focus:outline-none focus:border-blue-500 text-right"
-                        />
-                        <span className="text-xs text-zinc-500">cm</span>
-                      </div>
-                    </div>
-                    <input
-                      type="range" min={0} max={15} step={1} value={countertop.saiaHeight}
-                      onChange={e => setCountertop({ ...countertop, saiaHeight: Number(e.target.value) })}
-                      className="w-full h-1.5 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-blue-600"
-                    />
-                  </div>
+                  ))}
                 </div>
 
-                {/* Frontão laterally configs */}
+                {/* Frontão laterals */}
                 {countertop.frontaoHeight > 0 && (
-                  <div className="bg-black/30 border border-white/5 p-3 rounded-xl flex justify-between items-center text-xs text-zinc-300">
-                    <span className="font-medium text-zinc-400">Adicionar Abas Laterais:</span>
+                  <div className="bg-zinc-900/40 border border-white/8 rounded-xl px-3 py-2.5 flex justify-between items-center">
+                    <span className="text-xs text-zinc-400">Abas Laterais</span>
                     <div className="flex gap-4">
-                      <label className="flex items-center gap-1.5 cursor-pointer text-zinc-300">
-                        <input
-                          type="checkbox"
-                          checked={countertop.frontaoLeft}
-                          onChange={e => setCountertop({ ...countertop, frontaoLeft: e.target.checked })}
-                          className="accent-blue-600 rounded bg-zinc-900 border-white/10 w-4 h-4"
-                        />
-                        Esq.
-                      </label>
-                      <label className="flex items-center gap-1.5 cursor-pointer text-zinc-300">
-                        <input
-                          type="checkbox"
-                          checked={countertop.frontaoRight}
-                          onChange={e => setCountertop({ ...countertop, frontaoRight: e.target.checked })}
-                          className="accent-blue-600 rounded bg-zinc-900 border-white/10 w-4 h-4"
-                        />
-                        Dir.
-                      </label>
+                      {[{ key: 'frontaoLeft', label: 'Esq.' }, { key: 'frontaoRight', label: 'Dir.' }].map(ab => (
+                        <label key={ab.key} className="flex items-center gap-1.5 cursor-pointer text-xs text-zinc-300">
+                          <input type="checkbox"
+                            checked={(countertop as any)[ab.key]}
+                            onChange={e => setCountertop({ ...countertop, [ab.key]: e.target.checked })}
+                            className="accent-blue-600 w-3.5 h-3.5"
+                          />
+                          {ab.label}
+                        </label>
+                      ))}
                     </div>
                   </div>
                 )}
 
-                {/* 3. Slab thickness selection */}
-                <div className="border-t border-white/10 pt-4 flex justify-between items-center">
-                  <span className="text-xs font-medium text-zinc-400">Espessura Nominal:</span>
-                  <div className="flex bg-zinc-950 rounded-lg p-1 border border-white/15">
+                {/* Espessura */}
+                <div className="bg-zinc-900/40 border border-white/8 rounded-xl px-3 py-2.5 flex justify-between items-center">
+                  <span className="text-xs text-zinc-400">Espessura</span>
+                  <div className="flex bg-zinc-950 rounded-lg p-0.5 border border-white/10 gap-0.5">
                     {[2, 3].map(t => (
                       <button
                         key={t}
                         onClick={() => setCountertop({ ...countertop, thickness: t })}
-                        className={`px-3 py-1 rounded text-xs transition-all font-mono font-bold cursor-pointer ${
+                        className={`px-3 py-1 rounded-md text-xs font-mono font-bold transition-all cursor-pointer ${
                           countertop.thickness === t ? 'bg-blue-600 text-white' : 'text-zinc-500 hover:text-zinc-300'
                         }`}
                       >
