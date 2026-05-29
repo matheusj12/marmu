@@ -83,19 +83,57 @@ export default function BancadaModel({ config, material }: BancadaModelProps) {
 
   // ── Polygon mode rendering ─────────────────────────────────────────────
   if (customGeo) {
+    const verts = config.vertices!;
+    const xs = verts.map(v => v.x), ys = verts.map(v => v.y);
+    const minX = Math.min(...xs) / 100, maxX = Math.max(...xs) / 100;
+    const minY = Math.min(...ys) / 100, maxY = Math.max(...ys) / 100;
+    const polyW = maxX - minX;   // bounding box width in meters
+    const polyD = maxY - minY;   // bounding box depth in meters
+    const cx = (minX + maxX) / 2;
+    const cy = (minY + maxY) / 2;
+
+    // In world space after rotation-x(-π/2):
+    // shape-X → world-X, shape-Y → world-Z (negated), extrusion-Z → world-Y
+    // Back wall  = minY side  → world Z = -(minY - cy) = cy - minY = polyD/2
+    // Front wall = maxY side  → world Z = -(maxY - cy) = cy - maxY = -polyD/2
+
     return (
       <group>
+        {/* Main slab (extruded polygon) */}
         <mesh geometry={customGeo} rotation-x={-Math.PI / 2} position={[0, 0, 0]} castShadow receiveShadow>
           <meshStandardMaterial {...stoneMaterialProps} side={FrontSide} />
         </mesh>
-        {/* Sink model repositioned at approximate center */}
-        {config.hasSink && (
-          <group position={[0, t, 0]}>
-            <mesh position={[0, -0.09, 0]} castShadow>
-              <boxGeometry args={[sw - 0.01, 0.16, sd - 0.01]} />
-              <meshStandardMaterial color="#b5babf" roughness={0.15} metalness={0.95} />
-            </mesh>
-          </group>
+
+        {/* Frontão traseiro */}
+        {fh > 0 && (
+          <mesh position={[0, t + fh / 2, polyD / 2]} castShadow receiveShadow>
+            <boxGeometry args={[polyW, fh, t]} />
+            <meshStandardMaterial {...stoneMaterialProps} />
+          </mesh>
+        )}
+
+        {/* Aba lateral esquerda */}
+        {fh > 0 && config.frontaoLeft && (
+          <mesh position={[-polyW / 2 + t / 2, t + fh / 2, polyD / 4]} castShadow receiveShadow>
+            <boxGeometry args={[t, fh, polyD / 2]} />
+            <meshStandardMaterial {...stoneMaterialProps} />
+          </mesh>
+        )}
+
+        {/* Aba lateral direita */}
+        {fh > 0 && config.frontaoRight && (
+          <mesh position={[polyW / 2 - t / 2, t + fh / 2, polyD / 4]} castShadow receiveShadow>
+            <boxGeometry args={[t, fh, polyD / 2]} />
+            <meshStandardMaterial {...stoneMaterialProps} />
+          </mesh>
+        )}
+
+        {/* Saia frontal */}
+        {sh > 0 && (
+          <mesh position={[0, -sh / 2, -polyD / 2 + t / 2]} castShadow receiveShadow>
+            <boxGeometry args={[polyW, sh, t]} />
+            <meshStandardMaterial {...stoneMaterialProps} />
+          </mesh>
         )}
       </group>
     );
