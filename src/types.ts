@@ -15,6 +15,8 @@ export interface StoneMaterial {
   specular?: string;
 }
 
+export interface Vertex2D { x: number; y: number; } // em cm
+
 export interface CountertopConfig {
   width: number;       // em cm
   depth: number;       // em cm
@@ -33,6 +35,7 @@ export interface CountertopConfig {
   cooktopWidth: number;
   cooktopDepth: number;
   cooktopX: number;    // offset do centro em %
+  vertices?: Vertex2D[] | null; // polígono livre (null = modo retângulo)
 }
 
 export interface StaircaseConfig {

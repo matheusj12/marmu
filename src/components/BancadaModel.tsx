@@ -1,5 +1,5 @@
-import { useRef, useMemo } from 'react';
-import { CanvasTexture, RepeatWrapping } from 'three';
+import { useMemo } from 'react';
+import { CanvasTexture, RepeatWrapping, Shape, ExtrudeGeometry, DoubleSide } from 'three';
 import { CountertopConfig, StoneMaterial } from '../types';
 import { generateStoneTexture } from '../utils/textureGenerator';
 
@@ -44,11 +44,47 @@ export default function BancadaModel({ config, material }: BancadaModelProps) {
   const maxCooktopOffset = Math.max(0, (w / 2) - (cw / 2) - marginSideX);
   const cooktopOffsetX = Math.max(-maxCooktopOffset, Math.min(maxCooktopOffset, (config.cooktopX / 100) * maxCooktopOffset));
 
+  // ── Custom polygon geometry ────────────────────────────────────────────
+  const customGeo = useMemo(() => {
+    const verts = config.vertices;
+    if (!verts || verts.length < 3) return null;
+    const xs = verts.map(v => v.x), ys = verts.map(v => v.y);
+    const cx = (Math.min(...xs) + Math.max(...xs)) / 2 / 100;
+    const cy = (Math.min(...ys) + Math.max(...ys)) / 2 / 100;
+    const shape = new Shape();
+    shape.moveTo(verts[0].x / 100 - cx, -(verts[0].y / 100 - cy));
+    for (let i = 1; i < verts.length; i++) {
+      shape.lineTo(verts[i].x / 100 - cx, -(verts[i].y / 100 - cy));
+    }
+    shape.closePath();
+    return new ExtrudeGeometry(shape, { depth: t, bevelEnabled: false });
+  }, [config.vertices, t]);
+
   const stoneMaterialProps = {
     map: texture,
     roughness: material.roughness,
     metalness: material.metalness,
   };
+
+  // ── Polygon mode rendering ─────────────────────────────────────────────
+  if (customGeo) {
+    return (
+      <group>
+        <mesh geometry={customGeo} rotation-x={-Math.PI / 2} position={[0, 0, 0]} castShadow receiveShadow>
+          <meshStandardMaterial {...stoneMaterialProps} side={DoubleSide} />
+        </mesh>
+        {/* Sink model repositioned at approximate center */}
+        {config.hasSink && (
+          <group position={[0, t, 0]}>
+            <mesh position={[0, -0.09, 0]} castShadow>
+              <boxGeometry args={[sw - 0.01, 0.16, sd - 0.01]} />
+              <meshStandardMaterial color="#b5babf" roughness={0.15} metalness={0.95} />
+            </mesh>
+          </group>
+        )}
+      </group>
+    );
+  }
 
   return (
     <group position={[0, t / 2, 0]}>
