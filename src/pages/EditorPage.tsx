@@ -925,7 +925,7 @@ export default function EditorPage() {
           />
 
           {/* 2. INTERACTIVE 3D STAGE */}
-          <div className="h-[430px] sm:h-[480px] relative rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
+          <div className="h-[60vh] relative rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
             <ThreeView
               type={projectType}
               countertop={countertop}
