@@ -1,25 +1,14 @@
 import { useState, useMemo } from 'react';
 import {
   Layers,
-  Wrench,
-  Ruler,
   Flame,
   Droplet,
-  Cpu,
   Receipt,
   Check,
   Sliders,
-  ArrowRight,
-  Printer,
   RefreshCw,
-  Eye,
-  Settings,
-  HelpCircle,
-  TrendingUp,
-  MapPin,
   Phone,
   User,
-  Info,
   Link2,
   ChevronLeft,
 } from 'lucide-react';
@@ -283,34 +272,25 @@ export default function EditorPage() {
           <div className={`transition-all duration-300 ease-in-out overflow-hidden ${sidebarOpen ? 'w-[400px]' : 'w-0'}`}>
             <div className="w-[400px] flex flex-col gap-6 overflow-y-auto max-h-[calc(100vh-120px)] pr-1">
 
-          {/* A. WORKPIECE TYPE TABS */}
-          <div className="bg-black/40 border border-white/5 p-1 rounded-xl flex gap-1">
-            <button
-              onClick={() => {
-                setProjectType('pia');
-                setAutoRotate(false);
-              }}
-              className={`flex-1 py-2.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                projectType === 'pia'
-                  ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20'
-                  : 'text-zinc-500 hover:text-zinc-300'
-              }`}
-            >
-              BANCADAS & PIAS
-            </button>
-            <button
-              onClick={() => {
-                setProjectType('escada');
-                setAutoRotate(false);
-              }}
-              className={`flex-1 py-2.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                projectType === 'escada'
-                  ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20'
-                  : 'text-zinc-500 hover:text-zinc-300'
-              }`}
-            >
-              ESCADAS TÉCNICAS
-            </button>
+          {/* A. WORKPIECE TYPE LIST */}
+          <div className="bg-black/40 border border-white/5 p-1.5 rounded-xl flex flex-col gap-1">
+            {[
+              { id: 'pia', label: 'Bancadas & Pias' },
+              { id: 'escada', label: 'Escadas Técnicas' },
+            ].map(opt => (
+              <button
+                key={opt.id}
+                onClick={() => { setProjectType(opt.id as ProjectType); setAutoRotate(false); }}
+                className={`w-full text-left px-4 py-2.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
+                  projectType === opt.id
+                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20'
+                    : 'text-zinc-500 hover:text-zinc-300 hover:bg-white/5'
+                }`}
+              >
+                <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${projectType === opt.id ? 'bg-white' : 'bg-zinc-700'}`} />
+                {opt.label}
+              </button>
+            ))}
           </div>
 
           {/* B. DETAILED CONFIGURATOR SLIDERS & OPTIONS CARD */}
