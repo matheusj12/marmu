@@ -57,17 +57,10 @@ export default function BancadaModel({ config, material }: BancadaModelProps) {
       shape.lineTo(verts[i].x / 100 - cx, -(verts[i].y / 100 - cy));
     }
     shape.closePath();
-    // Add cutout holes — only if fully inside polygon bounding box (5cm margin)
-    const PAD = 0.05; // 5cm in meters
+    // Add cutout holes
     for (const cut of config.cutouts ?? []) {
       const hx0 = cut.x / 100 - cx, hx1 = (cut.x + cut.w) / 100 - cx;
       const hy0 = -(cut.y / 100 - cy), hy1 = -((cut.y + cut.h) / 100 - cy);
-      const shapeMinX = Math.min(...verts.map(v => v.x / 100 - cx));
-      const shapeMaxX = Math.max(...verts.map(v => v.x / 100 - cx));
-      const shapeMinY = Math.min(...verts.map(v => -(v.y / 100 - cy)));
-      const shapeMaxY = Math.max(...verts.map(v => -(v.y / 100 - cy)));
-      if (hx0 < shapeMinX + PAD || hx1 > shapeMaxX - PAD ||
-          Math.min(hy0, hy1) < shapeMinY + PAD || Math.max(hy0, hy1) > shapeMaxY - PAD) continue;
       const hole = new Path();
       hole.moveTo(hx0, hy0);
       hole.lineTo(hx1, hy0);
