@@ -394,17 +394,26 @@ export default function EditorPage() {
                 {countertop.frontaoHeight > 0 && (
                   <div className="bg-zinc-900/40 border border-white/8 rounded-xl px-3 py-2.5 flex justify-between items-center">
                     <span className="text-xs text-zinc-400">Abas Laterais</span>
-                    <div className="flex gap-4">
-                      {[{ key: 'frontaoLeft', label: 'Esq.' }, { key: 'frontaoRight', label: 'Dir.' }].map(ab => (
-                        <label key={ab.key} className="flex items-center gap-1.5 cursor-pointer text-xs text-zinc-300">
-                          <input type="checkbox"
-                            checked={(countertop as any)[ab.key]}
-                            onChange={e => setCountertop({ ...countertop, [ab.key]: e.target.checked })}
-                            className="accent-blue-600 w-3.5 h-3.5"
-                          />
-                          {ab.label}
-                        </label>
-                      ))}
+                    <div className="flex gap-2">
+                      {([
+                        { key: 'frontaoLeft',  label: 'Esq.' },
+                        { key: 'frontaoRight', label: 'Dir.' },
+                      ] as const).map(ab => {
+                        const active = ab.key === 'frontaoLeft' ? countertop.frontaoLeft : countertop.frontaoRight;
+                        return (
+                          <button
+                            key={ab.key}
+                            onClick={() => setCountertop({ ...countertop, [ab.key]: !active })}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer border ${
+                              active
+                                ? 'bg-blue-600 text-white border-blue-500/50'
+                                : 'bg-zinc-900 text-zinc-500 border-white/10 hover:text-zinc-300'
+                            }`}
+                          >
+                            {ab.label}
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
