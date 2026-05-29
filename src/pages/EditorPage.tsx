@@ -913,10 +913,18 @@ export default function EditorPage() {
 
         </div>
 
-        {/* RIGHT COLUMN: 3D VIEWPORT & 2D BLUEPRINT VIEW */}
-        <div className="flex-1 flex flex-col gap-6 min-w-0">
+        {/* RIGHT COLUMN: 2D BLUEPRINT + 3D VIEWPORT */}
+        <div className="flex-1 flex flex-col gap-3 min-w-0">
 
-          {/* 1. INTERACTIVE 3D STAGE */}
+          {/* 1. PRECISION 2D CAD SCHEMATICS */}
+          <Editor2D
+            type={projectType}
+            countertop={countertop}
+            staircase={staircase}
+            material={selectedMaterial}
+          />
+
+          {/* 2. INTERACTIVE 3D STAGE */}
           <div className="h-[430px] sm:h-[480px] relative rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
             <ThreeView
               type={projectType}
@@ -977,14 +985,6 @@ export default function EditorPage() {
             </div>
 
           </div>
-
-          {/* 2. PRECISION 2D CAD SCHEMATICS */}
-          <Editor2D
-            type={projectType}
-            countertop={countertop}
-            staircase={staircase}
-            material={selectedMaterial}
-          />
 
         </div>
 
