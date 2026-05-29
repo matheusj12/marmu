@@ -85,56 +85,157 @@ export default function BancadaModel({ config, material }: BancadaModelProps) {
   if (customGeo) {
     const verts = config.vertices!;
     const xs = verts.map(v => v.x), ys = verts.map(v => v.y);
-    const minX = Math.min(...xs) / 100, maxX = Math.max(...xs) / 100;
-    const minY = Math.min(...ys) / 100, maxY = Math.max(...ys) / 100;
-    const polyW = maxX - minX;   // bounding box width in meters
-    const polyD = maxY - minY;   // bounding box depth in meters
-    const cx = (minX + maxX) / 2;
-    const cy = (minY + maxY) / 2;
+    const minXm = Math.min(...xs) / 100, maxXm = Math.max(...xs) / 100;
+    const minYm = Math.min(...ys) / 100, maxYm = Math.max(...ys) / 100;
+    const polyW = maxXm - minXm;
+    const polyD = maxYm - minYm;
+    const cxm = (minXm + maxXm) / 2;
+    const cym = (minYm + maxYm) / 2;
 
-    // In world space after rotation-x(-π/2):
-    // shape-X → world-X, shape-Y → world-Z (negated), extrusion-Z → world-Y
-    // Back wall  = minY side  → world Z = -(minY - cy) = cy - minY = polyD/2
-    // Front wall = maxY side  → world Z = -(maxY - cy) = cy - maxY = -polyD/2
+    // After rotation-x(-π/2): shape X→worldX, shape Y→-worldZ
+    // So: world_z = v.y/100 - cym  →  back(minY)= -polyD/2, front(maxY)= +polyD/2
+    const backZ  = -polyD / 2;
+    const frontZ =  polyD / 2;
+
+    // World position of a cutout center (cm coords → meters centered)
+    const cutPos = (cut: { x: number; y: number; w: number; h: number }) => ({
+      wx: (cut.x + cut.w / 2) / 100 - cxm,
+      wz: (cut.y + cut.h / 2) / 100 - cym,
+      ww: cut.w / 100,
+      wd: cut.h / 100,
+    });
 
     return (
       <group>
-        {/* Main slab (extruded polygon) */}
+        {/* Main slab */}
         <mesh geometry={customGeo} rotation-x={-Math.PI / 2} position={[0, 0, 0]} castShadow receiveShadow>
           <meshStandardMaterial {...stoneMaterialProps} side={FrontSide} />
         </mesh>
 
-        {/* Frontão traseiro */}
+        {/* Frontão traseiro — back wall */}
         {fh > 0 && (
-          <mesh position={[0, t + fh / 2, polyD / 2]} castShadow receiveShadow>
+          <mesh position={[0, t + fh / 2, backZ + t / 2]} castShadow receiveShadow>
             <boxGeometry args={[polyW, fh, t]} />
             <meshStandardMaterial {...stoneMaterialProps} />
           </mesh>
         )}
-
-        {/* Aba lateral esquerda */}
         {fh > 0 && config.frontaoLeft && (
-          <mesh position={[-polyW / 2 + t / 2, t + fh / 2, polyD / 4]} castShadow receiveShadow>
+          <mesh position={[-polyW / 2 + t / 2, t + fh / 2, backZ + polyD / 4]} castShadow receiveShadow>
             <boxGeometry args={[t, fh, polyD / 2]} />
             <meshStandardMaterial {...stoneMaterialProps} />
           </mesh>
         )}
-
-        {/* Aba lateral direita */}
         {fh > 0 && config.frontaoRight && (
-          <mesh position={[polyW / 2 - t / 2, t + fh / 2, polyD / 4]} castShadow receiveShadow>
+          <mesh position={[polyW / 2 - t / 2, t + fh / 2, backZ + polyD / 4]} castShadow receiveShadow>
             <boxGeometry args={[t, fh, polyD / 2]} />
             <meshStandardMaterial {...stoneMaterialProps} />
           </mesh>
         )}
 
-        {/* Saia frontal */}
+        {/* Saia frontal — front wall */}
         {sh > 0 && (
-          <mesh position={[0, -sh / 2, -polyD / 2 + t / 2]} castShadow receiveShadow>
+          <mesh position={[0, -sh / 2, frontZ - t / 2]} castShadow receiveShadow>
             <boxGeometry args={[polyW, sh, t]} />
             <meshStandardMaterial {...stoneMaterialProps} />
           </mesh>
         )}
+
+        {/* ── 3D accessories for each cutout ── */}
+        {(config.cutouts ?? []).map(cut => {
+          const { wx, wz, ww, wd } = cutPos(cut);
+          const tipo = cut.tipo ?? 'vao';
+
+          if (tipo === 'cuba') return (
+            <group key={cut.id} position={[wx, t, wz]}>
+              {/* Inox bowl */}
+              <mesh position={[0, -0.09, 0]} castShadow>
+                <boxGeometry args={[ww - 0.01, 0.16, wd - 0.01]} />
+                <meshStandardMaterial color="#b5babf" roughness={0.12} metalness={0.95} />
+              </mesh>
+              {/* Drain */}
+              <mesh position={[0, -0.168, 0]}>
+                <cylinderGeometry args={[0.03, 0.03, 0.005, 16]} />
+                <meshStandardMaterial color="#111" roughness={0.5} />
+              </mesh>
+              {/* Lip ring */}
+              <mesh position={[0, 0.001, 0]}>
+                <boxGeometry args={[ww + 0.02, 0.002, wd + 0.02]} />
+                <meshStandardMaterial color="#e0e4e8" roughness={0.1} metalness={0.9} />
+              </mesh>
+              {/* Faucet */}
+              <group position={[0, 0, -wd / 2 - 0.02]}>
+                <mesh position={[0, 0.08, 0]}>
+                  <cylinderGeometry args={[0.012, 0.012, 0.16]} />
+                  <meshStandardMaterial color="#dfdfdf" metalness={0.9} roughness={0.1} />
+                </mesh>
+                <mesh position={[0, 0.19, 0.06]} rotation={[1.2, 0, 0]}>
+                  <cylinderGeometry args={[0.01, 0.01, 0.09]} />
+                  <meshStandardMaterial color="#dfdfdf" metalness={0.9} roughness={0.1} />
+                </mesh>
+              </group>
+            </group>
+          );
+
+          if (tipo === 'cooktop') return (
+            <group key={cut.id} position={[wx, t + 0.002, wz]}>
+              {/* Black glass base */}
+              <mesh castShadow>
+                <boxGeometry args={[ww + 0.015, 0.004, wd + 0.015]} />
+                <meshStandardMaterial color="#0b0c10" roughness={0.05} metalness={0.9} />
+              </mesh>
+              {/* Burner rings */}
+              <group position={[0, 0.003, 0]}>
+                {[
+                  [-ww * 0.28,  wd * 0.22, 0.038, 0.043],
+                  [ ww * 0.28,  wd * 0.22, 0.033, 0.038],
+                  [-ww * 0.28, -wd * 0.22, 0.043, 0.049],
+                  [ ww * 0.28, -wd * 0.22, 0.028, 0.033],
+                ].map(([bx, bz, r1, r2], i) => (
+                  <mesh key={i} position={[bx as number, 0, bz as number]}>
+                    <ringGeometry args={[r1 as number, r2 as number, 32]} />
+                    <meshBasicMaterial color="#ffffff" opacity={0.6} transparent />
+                  </mesh>
+                ))}
+              </group>
+              {/* Touch control strip */}
+              <mesh position={[ww * 0.35, 0.003, wd * 0.38]}>
+                <boxGeometry args={[0.04, 0.001, 0.015]} />
+                <meshStandardMaterial color="#ff3b30" emissive="#ff3b30" emissiveIntensity={0.6} />
+              </mesh>
+            </group>
+          );
+
+          if (tipo === 'torneira') return (
+            <group key={cut.id} position={[wx, t, wz]}>
+              {/* Base plate */}
+              <mesh>
+                <cylinderGeometry args={[ww / 2, ww / 2, 0.008, 24]} />
+                <meshStandardMaterial color="#c8cdd2" metalness={0.9} roughness={0.15} />
+              </mesh>
+              {/* Post */}
+              <mesh position={[0, 0.12, 0]}>
+                <cylinderGeometry args={[0.013, 0.013, 0.22]} />
+                <meshStandardMaterial color="#dfdfdf" metalness={0.9} roughness={0.1} />
+              </mesh>
+              {/* Neck arc */}
+              <mesh position={[0, 0.24, 0.04]} rotation={[1.1, 0, 0]}>
+                <cylinderGeometry args={[0.01, 0.01, 0.1]} />
+                <meshStandardMaterial color="#dfdfdf" metalness={0.9} roughness={0.1} />
+              </mesh>
+              <mesh position={[0, 0.25, 0.09]}>
+                <cylinderGeometry args={[0.009, 0.009, 0.04]} />
+                <meshStandardMaterial color="#dfdfdf" metalness={0.9} roughness={0.1} />
+              </mesh>
+              {/* Handle */}
+              <mesh position={[0.025, 0.12, 0.01]} rotation={[0, 0, 1.5]}>
+                <cylinderGeometry args={[0.005, 0.005, 0.05]} />
+                <meshStandardMaterial color="#c0c4c8" metalness={0.8} roughness={0.2} />
+              </mesh>
+            </group>
+          );
+
+          return null; // 'vao' → handled by shape hole, no 3D accessory
+        })}
       </group>
     );
   }
