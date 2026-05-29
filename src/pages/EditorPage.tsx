@@ -202,6 +202,35 @@ export default function EditorPage() {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  // --- SYNC: dimensões derivadas dos vértices (fonte única de verdade) ---
+  const vertBounds = useMemo(() => {
+    const verts = countertop.vertices;
+    if (!verts || verts.length < 2) return { w: countertop.width, d: countertop.depth };
+    const xs = verts.map(v => v.x), ys = verts.map(v => v.y);
+    return {
+      w: Math.round(Math.max(...xs) - Math.min(...xs)),
+      d: Math.round(Math.max(...ys) - Math.min(...ys)),
+    };
+  }, [countertop.vertices, countertop.width, countertop.depth]);
+
+  const scaleVerts = (axis: 'x' | 'y', newSize: number) => {
+    const verts = countertop.vertices;
+    if (!verts || verts.length < 2) {
+      setCountertop({ ...countertop, [axis === 'x' ? 'width' : 'depth']: newSize });
+      return;
+    }
+    const vals = verts.map(v => v[axis]);
+    const minV = Math.min(...vals), maxV = Math.max(...vals);
+    const oldSize = maxV - minV;
+    if (oldSize === 0) return;
+    const scale = newSize / oldSize;
+    const newVerts = verts.map(v => ({
+      ...v,
+      [axis]: Math.round((minV + (v[axis] - minV) * scale)),
+    }));
+    setCountertop({ ...countertop, [axis === 'x' ? 'width' : 'depth']: newSize, vertices: newVerts });
+  };
+
   // --- DYNAMIC PHYSICS CALCULATIONS ---
   const perimetro = useMemo(() => {
     if (projectType === 'pia') {
@@ -307,28 +336,27 @@ export default function EditorPage() {
               // --- COUNTERTOP PARAMS ---
               <div className="space-y-3">
 
-                {/* Helper component inline — field row */}
-                {/* Largura + Profundidade */}
+                {/* Largura + Profundidade — sincronizados com vértices */}
                 <div className="grid grid-cols-2 gap-2">
                   {[
-                    { label: 'Largura', key: 'width',  min: 60,  max: 300, step: 5  },
-                    { label: 'Profund.', key: 'depth',  min: 40,  max: 120, step: 5  },
+                    { label: 'Largura',  axis: 'x' as const, val: vertBounds.w, min: 60,  max: 300, step: 5 },
+                    { label: 'Profund.', axis: 'y' as const, val: vertBounds.d, min: 40,  max: 120, step: 5 },
                   ].map(f => (
-                    <div key={f.key} className="bg-zinc-900/60 border border-white/8 rounded-xl p-3 flex flex-col gap-2">
+                    <div key={f.axis} className="bg-zinc-900/60 border border-white/8 rounded-xl p-3 flex flex-col gap-2">
                       <span className="text-[10px] text-zinc-500 uppercase font-bold tracking-wider">{f.label}</span>
                       <div className="flex items-center gap-1.5">
                         <input
                           type="number" min={f.min} max={f.max} step={f.step}
-                          value={(countertop as any)[f.key]}
-                          onChange={e => setCountertop({ ...countertop, [f.key]: Math.min(f.max, Math.max(f.min, Number(e.target.value))) })}
+                          value={f.val}
+                          onChange={e => scaleVerts(f.axis, Math.min(f.max, Math.max(f.min, Number(e.target.value))))}
                           className="flex-1 w-0 text-base font-mono font-bold text-blue-400 bg-transparent border-none outline-none text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         />
                         <span className="text-xs text-zinc-500 shrink-0">cm</span>
                       </div>
                       <input
                         type="range" min={f.min} max={f.max} step={f.step}
-                        value={(countertop as any)[f.key]}
-                        onChange={e => setCountertop({ ...countertop, [f.key]: Number(e.target.value) })}
+                        value={f.val}
+                        onChange={e => scaleVerts(f.axis, Number(e.target.value))}
                         className="w-full h-1 accent-blue-500 cursor-pointer"
                       />
                     </div>
