@@ -922,6 +922,8 @@ export default function EditorPage() {
             countertop={countertop}
             staircase={staircase}
             material={selectedMaterial}
+            onCountertopChange={setCountertop}
+            onStaircaseChange={setStaircase}
           />
 
           {/* 2. INTERACTIVE 3D STAGE */}
