@@ -108,18 +108,30 @@ export default function Editor2D({
         onCountertopChange({ ...countertop, vertices: newVerts });
       } else if (d.type === 'cutout-move') {
         const dx = (x - d.startMX) / d.polyScale, dy = (y - d.startMY) / d.polyScale;
+        const xs = (countertop.vertices ?? []).map(v => v.x), ys2 = (countertop.vertices ?? []).map(v => v.y);
+        const PAD = 5;
+        const bMinX = Math.min(...xs) + PAD, bMaxX = Math.max(...xs) - d.startC.w - PAD;
+        const bMinY = Math.min(...ys2) + PAD, bMaxY = Math.max(...ys2) - d.startC.h - PAD;
         const updated = (countertop.cutouts ?? []).map(c =>
-          c.id === d.id ? { ...c, x: snap(d.startC.x + dx, SNAP), y: snap(d.startC.y + dy, SNAP) } : c
+          c.id === d.id ? {
+            ...c,
+            x: clamp(snap(d.startC.x + dx, SNAP), bMinX, bMaxX),
+            y: clamp(snap(d.startC.y + dy, SNAP), bMinY, bMaxY),
+          } : c
         );
         onCountertopChange({ ...countertop, cutouts: updated });
       } else if (d.type === 'cutout-resize') {
         const dx = (x - d.startMX) / d.polyScale, dy = (y - d.startMY) / d.polyScale;
         const c = d.startC;
+        const xs = (countertop.vertices ?? []).map(v => v.x), ys2 = (countertop.vertices ?? []).map(v => v.y);
+        const PAD = 5;
+        const bMinX = Math.min(...xs) + PAD, bMaxX = Math.max(...xs) - PAD;
+        const bMinY = Math.min(...ys2) + PAD, bMaxY = Math.max(...ys2) - PAD;
         let nx = c.x, ny = c.y, nw = c.w, nh = c.h;
-        if (d.corner === 'br') { nw = Math.max(10, snap(c.w + dx, SNAP)); nh = Math.max(10, snap(c.h + dy, SNAP)); }
-        if (d.corner === 'bl') { nx = snap(c.x + dx, SNAP); nw = Math.max(10, snap(c.w - dx, SNAP)); nh = Math.max(10, snap(c.h + dy, SNAP)); }
-        if (d.corner === 'tr') { ny = snap(c.y + dy, SNAP); nw = Math.max(10, snap(c.w + dx, SNAP)); nh = Math.max(10, snap(c.h - dy, SNAP)); }
-        if (d.corner === 'tl') { nx = snap(c.x + dx, SNAP); ny = snap(c.y + dy, SNAP); nw = Math.max(10, snap(c.w - dx, SNAP)); nh = Math.max(10, snap(c.h - dy, SNAP)); }
+        if (d.corner === 'br') { nw = clamp(Math.max(10, snap(c.w + dx, SNAP)), 10, bMaxX - c.x); nh = clamp(Math.max(10, snap(c.h + dy, SNAP)), 10, bMaxY - c.y); }
+        if (d.corner === 'bl') { nx = clamp(snap(c.x + dx, SNAP), bMinX, c.x + c.w - 10); nw = Math.max(10, c.x + c.w - nx); nh = clamp(Math.max(10, snap(c.h + dy, SNAP)), 10, bMaxY - c.y); }
+        if (d.corner === 'tr') { ny = clamp(snap(c.y + dy, SNAP), bMinY, c.y + c.h - 10); nw = clamp(Math.max(10, snap(c.w + dx, SNAP)), 10, bMaxX - c.x); nh = Math.max(10, c.y + c.h - ny); }
+        if (d.corner === 'tl') { nx = clamp(snap(c.x + dx, SNAP), bMinX, c.x + c.w - 10); ny = clamp(snap(c.y + dy, SNAP), bMinY, c.y + c.h - 10); nw = Math.max(10, c.x + c.w - nx); nh = Math.max(10, c.y + c.h - ny); }
         const updated = (countertop.cutouts ?? []).map(ct =>
           ct.id === d.id ? { ...ct, x: nx, y: ny, w: nw, h: nh } : ct
         );
@@ -175,11 +187,14 @@ export default function Editor2D({
     onCountertopChange({ ...countertop, width: clamp(snap(bw, SNAP), 60, 300), depth: clamp(snap(bh, SNAP), 40, 120), vertices: null });
   };
   const addCutout = () => {
-    if (!onCountertopChange) return;
+    if (!onCountertopChange || verts.length < 3) return;
     const xs = verts.map(v => v.x), ys = verts.map(v => v.y);
-    const cx = snap((Math.min(...xs) + Math.max(...xs)) / 2 - 25, SNAP);
-    const cy = snap((Math.min(...ys) + Math.max(...ys)) / 2 - 20, SNAP);
-    const newCutout: Cutout2D = { id: Date.now(), x: cx, y: cy, w: 50, h: 40, label: 'Vão' };
+    const minX = Math.min(...xs), maxX = Math.max(...xs);
+    const minY = Math.min(...ys), maxY = Math.max(...ys);
+    const W = 30, H = 25; // tamanho padrão seguro
+    const cx = snap((minX + maxX) / 2 - W / 2, SNAP);
+    const cy = snap((minY + maxY) / 2 - H / 2, SNAP);
+    const newCutout: Cutout2D = { id: Date.now(), x: cx, y: cy, w: W, h: H, label: 'Vão' };
     onCountertopChange({ ...countertop, cutouts: [...(countertop.cutouts ?? []), newCutout] });
   };
   const removeCutout = (id: number) => {
