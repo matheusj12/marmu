@@ -1,5 +1,5 @@
 import { useMemo, useEffect } from 'react';
-import { CanvasTexture, RepeatWrapping, Shape, Path, ExtrudeGeometry, DoubleSide } from 'three';
+import { CanvasTexture, RepeatWrapping, Shape, Path, ExtrudeGeometry, FrontSide } from 'three';
 import { CountertopConfig, StoneMaterial } from '../types';
 import { generateStoneTexture } from '../utils/textureGenerator';
 
@@ -86,7 +86,7 @@ export default function BancadaModel({ config, material }: BancadaModelProps) {
     return (
       <group>
         <mesh geometry={customGeo} rotation-x={-Math.PI / 2} position={[0, 0, 0]} castShadow receiveShadow>
-          <meshStandardMaterial {...stoneMaterialProps} side={DoubleSide} />
+          <meshStandardMaterial {...stoneMaterialProps} side={FrontSide} />
         </mesh>
         {/* Sink model repositioned at approximate center */}
         {config.hasSink && (
