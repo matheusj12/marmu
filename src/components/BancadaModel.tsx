@@ -120,14 +120,14 @@ export default function BancadaModel({ config, material }: BancadaModelProps) {
           </mesh>
         )}
         {fh > 0 && config.frontaoLeft && (
-          <mesh position={[-polyW / 2 + t / 2, t + fh / 2, backZ + polyD / 4]} castShadow receiveShadow>
-            <boxGeometry args={[t, fh, polyD / 2]} />
+          <mesh position={[-polyW / 2 + t / 2, t + fh / 2, t / 2]} castShadow receiveShadow>
+            <boxGeometry args={[t, fh, polyD - t]} />
             <meshStandardMaterial {...stoneMaterialProps} />
           </mesh>
         )}
         {fh > 0 && config.frontaoRight && (
-          <mesh position={[polyW / 2 - t / 2, t + fh / 2, backZ + polyD / 4]} castShadow receiveShadow>
-            <boxGeometry args={[t, fh, polyD / 2]} />
+          <mesh position={[polyW / 2 - t / 2, t + fh / 2, t / 2]} castShadow receiveShadow>
+            <boxGeometry args={[t, fh, polyD - t]} />
             <meshStandardMaterial {...stoneMaterialProps} />
           </mesh>
         )}
