@@ -145,7 +145,7 @@ export default function BancadaModel({ config, material }: BancadaModelProps) {
           const { wx, wz, ww, wd } = cutPos(cut);
           const tipo = cut.tipo ?? 'vao';
 
-          if (tipo === 'cuba') return (
+          if (tipo.startsWith('cuba')) return (
             <group key={cut.id} position={[wx, t, wz]}>
               {/* Inox bowl */}
               <mesh position={[0, -0.09, 0]} castShadow>
@@ -176,7 +176,7 @@ export default function BancadaModel({ config, material }: BancadaModelProps) {
             </group>
           );
 
-          if (tipo === 'cooktop') return (
+          if (tipo.startsWith('cooktop') || tipo === 'inducao') return (
             <group key={cut.id} position={[wx, t + 0.002, wz]}>
               {/* Black glass base */}
               <mesh castShadow>
@@ -205,7 +205,7 @@ export default function BancadaModel({ config, material }: BancadaModelProps) {
             </group>
           );
 
-          if (tipo === 'torneira') return (
+          if (tipo.startsWith('torneira')) return (
             <group key={cut.id} position={[wx, t, wz]}>
               {/* Base plate */}
               <mesh>

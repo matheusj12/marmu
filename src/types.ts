@@ -15,7 +15,19 @@ export interface StoneMaterial {
   specular?: string;
 }
 
-export type CutoutTipo = 'vao' | 'cuba' | 'cooktop' | 'torneira';
+export type CutoutTipo =
+  | 'vao'
+  // Cuba
+  | 'cuba-simples' | 'cuba-dupla' | 'cuba-esculpida' | 'cuba-sobreposta'
+  // Cooktop
+  | 'cooktop-4b' | 'cooktop-5b' | 'inducao' | 'cooktop-2b'
+  // Torneira
+  | 'torneira-mono' | 'torneira-alta' | 'torneira-cascata' | 'torneira-industrial'
+  // Extras
+  | 'calha' | 'ralo' | 'duto' | 'nicho';
+
+// backwards-compat aliases used before sub-variants
+export type CutoutTipoLegacy = 'cuba' | 'cooktop' | 'torneira';
 export interface Vertex2D { x: number; y: number; } // em cm
 export interface Cutout2D { id: number; x: number; y: number; w: number; h: number; label?: string; tipo?: CutoutTipo; } // recorte em cm
 

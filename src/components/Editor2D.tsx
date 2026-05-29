@@ -44,6 +44,7 @@ export default function Editor2D({
 
   const freeMode = !!(countertop.vertices && countertop.vertices.length >= 3);
   const [selectedCutoutId, setSelectedCutoutId] = useState<number | null>(null);
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
   // ── Coordinate helpers ─────────────────────────────────────────────────
   const svgCoords = useCallback((clientX: number, clientY: number) => {
@@ -148,6 +149,14 @@ export default function Editor2D({
     return () => { document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); };
   }, [countertop, onCountertopChange, rScale, svgCoords]);
 
+  // ── Close dropdown on outside click ───────────────────────────────────
+  useEffect(() => {
+    if (!openDropdown) return;
+    const close = () => setOpenDropdown(null);
+    document.addEventListener('mousedown', close);
+    return () => document.removeEventListener('mousedown', close);
+  }, [openDropdown]);
+
   // ── Keyboard: Delete/Backspace removes selected cutout ─────────────────
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -174,28 +183,86 @@ export default function Editor2D({
     const bh = Math.max(...ys) - Math.min(...ys);
     onCountertopChange({ ...countertop, width: clamp(snap(bw, SNAP), 60, 300), depth: clamp(snap(bh, SNAP), 40, 120), vertices: null });
   };
-  const CUTOUT_PRESETS: Record<CutoutTipo, { w: number; h: number; label: string }> = {
-    vao:      { w: 30,  h: 25, label: 'Vão'      },
-    cuba:     { w: 50,  h: 40, label: 'Cuba'     },
-    cooktop:  { w: 70,  h: 50, label: 'Cooktop'  },
-    torneira: { w: 8,   h: 8,  label: 'Torneira' },
+  // ── Cutout catalog ────────────────────────────────────────────────────
+  type CatalogEntry = { w: number; h: number; label: string; desc: string };
+  const CATALOG: Record<CutoutTipo, CatalogEntry> = {
+    vao:                  { w: 30, h: 25, label: 'Vão',               desc: 'Abertura estrutural' },
+    // Cuba
+    'cuba-simples':       { w: 50, h: 40, label: 'Cuba Simples',      desc: 'Inox embutir 50×40' },
+    'cuba-dupla':         { w: 80, h: 40, label: 'Cuba Dupla',        desc: 'Dois cubas inox 80×40' },
+    'cuba-esculpida':     { w: 55, h: 45, label: 'Cuba Esculpida',    desc: 'Rampa na pedra 55×45' },
+    'cuba-sobreposta':    { w: 50, h: 40, label: 'Cuba Sobreposta',   desc: 'Apoiada sobre pedra' },
+    // Cooktop
+    'cooktop-4b':         { w: 70, h: 50, label: 'Cooktop 4B',        desc: '4 bocas padrão 70×50' },
+    'cooktop-5b':         { w: 80, h: 50, label: 'Cooktop 5B',        desc: '5 bocas + central 80×50' },
+    'inducao':            { w: 70, h: 50, label: 'Indução',           desc: 'Placa lisa 70×50' },
+    'cooktop-2b':         { w: 40, h: 50, label: 'Compacto 2B',       desc: '2 bocas 40×50' },
+    // Torneira
+    'torneira-mono':      { w: 8,  h: 8,  label: 'Monocomando',       desc: 'Furo ⌀8cm' },
+    'torneira-alta':      { w: 8,  h: 8,  label: 'Bica Alta',         desc: 'Pescoço longo ⌀8cm' },
+    'torneira-cascata':   { w: 10, h: 10, label: 'Cascata',           desc: 'Lâmina d\'água ⌀10cm' },
+    'torneira-industrial':{ w: 8,  h: 8,  label: 'Industrial',        desc: 'Estilo industrial ⌀8cm' },
+    // Extras
+    calha:                { w: 10, h: 50, label: 'Calha',             desc: 'Canal de escoamento' },
+    ralo:                 { w: 15, h: 15, label: 'Ralo',              desc: 'Ralo quadrado embutido' },
+    duto:                 { w: 20, h: 20, label: 'Duto',              desc: 'Passagem de tubulação' },
+    nicho:                { w: 30, h: 30, label: 'Nicho',             desc: 'Recesso decorativo' },
   };
 
-  const CUTOUT_STYLE: Record<CutoutTipo, { stroke: string; fill: string; text: string; dash: string }> = {
-    vao:      { stroke: '#f97316', fill: '#0f1115',  text: '#fb923c', dash: '5,3' },
-    cuba:     { stroke: '#38bdf8', fill: '#0c1929',  text: '#7dd3fc', dash: '4,3' },
-    cooktop:  { stroke: '#4ade80', fill: '#0a1a10',  text: '#86efac', dash: '4,2' },
-    torneira: { stroke: '#a78bfa', fill: '#110d1e',  text: '#c4b5fd', dash: '2,2' },
+  const STYLE_BY_GROUP: Record<string, { stroke: string; fill: string; text: string; dash: string }> = {
+    vao:      { stroke: '#f97316', fill: '#0f1115', text: '#fb923c', dash: '5,3' },
+    cuba:     { stroke: '#38bdf8', fill: '#0c1929', text: '#7dd3fc', dash: '4,3' },
+    cooktop:  { stroke: '#4ade80', fill: '#0a1a10', text: '#86efac', dash: '4,2' },
+    torneira: { stroke: '#a78bfa', fill: '#110d1e', text: '#c4b5fd', dash: '2,2' },
+    extra:    { stroke: '#fb7185', fill: '#1a0d11', text: '#fda4af', dash: '3,2' },
   };
+  const getStyle = (tipo: CutoutTipo) => {
+    if (tipo === 'vao') return STYLE_BY_GROUP.vao;
+    if (tipo.startsWith('cuba')) return STYLE_BY_GROUP.cuba;
+    if (tipo.startsWith('cooktop') || tipo === 'inducao') return STYLE_BY_GROUP.cooktop;
+    if (tipo.startsWith('torneira')) return STYLE_BY_GROUP.torneira;
+    return STYLE_BY_GROUP.extra;
+  };
+
+  const GROUPS = [
+    {
+      key: 'vao', label: '+ Vão', color: 'bg-orange-600 hover:bg-orange-500 border-orange-500/30',
+      items: [{ tipo: 'vao' as CutoutTipo }],
+      single: true,
+    },
+    {
+      key: 'cuba', label: '+ Cuba', color: 'bg-sky-600 hover:bg-sky-500 border-sky-500/30',
+      items: ['cuba-simples','cuba-dupla','cuba-esculpida','cuba-sobreposta'] as CutoutTipo[],
+    },
+    {
+      key: 'cooktop', label: '+ Cooktop', color: 'bg-emerald-600 hover:bg-emerald-500 border-emerald-500/30',
+      items: ['cooktop-4b','cooktop-5b','inducao','cooktop-2b'] as CutoutTipo[],
+    },
+    {
+      key: 'torneira', label: '+ Torneira', color: 'bg-violet-600 hover:bg-violet-500 border-violet-500/30',
+      items: ['torneira-mono','torneira-alta','torneira-cascata','torneira-industrial'] as CutoutTipo[],
+    },
+    {
+      key: 'extra', label: '+ Extras', color: 'bg-rose-600 hover:bg-rose-500 border-rose-500/30',
+      items: ['calha','ralo','duto','nicho'] as CutoutTipo[],
+    },
+  ];
+
+  // Legacy alias map — keep backwards compat for old snapshots
+  const CUTOUT_PRESETS = CATALOG;
+  const CUTOUT_STYLE = { ...STYLE_BY_GROUP }; // keep reference for SVG rendering below
+  void CUTOUT_STYLE;
 
   const addCutout = (tipo: CutoutTipo = 'vao') => {
     if (!onCountertopChange || verts.length < 3) return;
     const xs = verts.map(v => v.x), ys = verts.map(v => v.y);
-    const { w: W, h: H, label } = CUTOUT_PRESETS[tipo];
+    const entry = CATALOG[tipo] ?? CATALOG['vao'];
+    const { w: W, h: H, label } = entry;
     const cx = snap((Math.min(...xs) + Math.max(...xs)) / 2 - W / 2, SNAP);
     const cy = snap((Math.min(...ys) + Math.max(...ys)) / 2 - H / 2, SNAP);
     const newCutout: Cutout2D = { id: Date.now(), x: cx, y: cy, w: W, h: H, label, tipo };
     onCountertopChange({ ...countertop, cutouts: [...(countertop.cutouts ?? []), newCutout] });
+    setOpenDropdown(null);
   };
   const removeCutout = (id: number) => {
     if (!onCountertopChange) return;
@@ -277,27 +344,37 @@ export default function Editor2D({
         <div className="flex items-center gap-2">
           {/* Mode toggle */}
           {onCountertopChange && freeMode && (
-            <div className="flex items-center gap-1.5">
-              <button onClick={() => addCutout('vao')}
-                className="text-[9px] bg-orange-600 hover:bg-orange-500 text-white font-bold px-2.5 py-1 rounded border border-orange-500/30 transition-all cursor-pointer"
-                title="Vão estrutural — abertura na pedra">
-                + Vão
-              </button>
-              <button onClick={() => addCutout('cuba')}
-                className="text-[9px] bg-sky-600 hover:bg-sky-500 text-white font-bold px-2.5 py-1 rounded border border-sky-500/30 transition-all cursor-pointer"
-                title="Recorte para cuba (50×40cm padrão)">
-                + Cuba
-              </button>
-              <button onClick={() => addCutout('cooktop')}
-                className="text-[9px] bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-2.5 py-1 rounded border border-emerald-500/30 transition-all cursor-pointer"
-                title="Recorte para cooktop (70×50cm padrão)">
-                + Cooktop
-              </button>
-              <button onClick={() => addCutout('torneira')}
-                className="text-[9px] bg-violet-600 hover:bg-violet-500 text-white font-bold px-2.5 py-1 rounded border border-violet-500/30 transition-all cursor-pointer"
-                title="Furo para torneira (⌀ 8cm)">
-                + Torneira
-              </button>
+            <div className="flex items-center gap-1">
+              {GROUPS.map(g => (
+                <div key={g.key} className="relative">
+                  <button
+                    onClick={() => {
+                      if (g.single) { addCutout('vao'); return; }
+                      setOpenDropdown(openDropdown === g.key ? null : g.key);
+                    }}
+                    className={`text-[9px] text-white font-bold px-2.5 py-1 rounded border transition-all cursor-pointer ${g.color}`}
+                  >
+                    {g.label} {!g.single && (openDropdown === g.key ? '▲' : '▼')}
+                  </button>
+                  {!g.single && openDropdown === g.key && (
+                    <div className="absolute top-full left-0 mt-1 bg-[#1a1a22] border border-white/10 rounded-xl shadow-2xl z-50 min-w-[170px] py-1 overflow-hidden">
+                      {(g.items as CutoutTipo[]).map(tipo => {
+                        const entry = CATALOG[tipo];
+                        return (
+                          <button
+                            key={tipo}
+                            onClick={() => addCutout(tipo)}
+                            className="w-full text-left px-3 py-2 hover:bg-white/8 transition-all flex flex-col gap-0.5"
+                          >
+                            <span className="text-[10px] font-bold text-zinc-200">{entry.label}</span>
+                            <span className="text-[9px] text-zinc-500">{entry.desc}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
           )}
           <span className="text-[9px] bg-purple-500/10 text-purple-400 border border-purple-500/20 font-mono px-2 py-1 rounded">
@@ -364,11 +441,11 @@ export default function Editor2D({
                 {/* ── Cutouts ── */}
                 {(countertop.cutouts ?? []).map(cut => {
                   const tipo = cut.tipo ?? 'vao';
-                  const sty = CUTOUT_STYLE[tipo];
+                  const sty = getStyle(tipo);
                   const px = toPx({ x: cut.x, y: cut.y });
                   const pw = cut.w * polyScale, ph = cut.h * polyScale;
                   const selected = selectedCutoutId === cut.id;
-                  const isTorneira = tipo === 'torneira';
+                  const isTorneira = tipo.startsWith('torneira');
                   const corners: { key: 'tl'|'tr'|'br'|'bl'; cx: number; cy: number; cursor: string }[] = [
                     { key: 'tl', cx: px.x,       cy: px.y,      cursor: 'nwse-resize' },
                     { key: 'tr', cx: px.x + pw,  cy: px.y,      cursor: 'nesw-resize' },
@@ -398,7 +475,7 @@ export default function Editor2D({
                         />
                       )}
                       {/* Cooktop burner rings */}
-                      {tipo === 'cooktop' && pw > 20 && (
+                      {(tipo.startsWith('cooktop') || tipo === 'inducao') && pw > 20 && (
                         <g style={{ pointerEvents: 'none' }}>
                           <circle cx={px.x + pw*0.3} cy={px.y + ph/2} r={Math.min(pw,ph)*0.12} fill="none" stroke={sty.stroke} strokeWidth="0.8" opacity="0.5" />
                           <circle cx={px.x + pw*0.7} cy={px.y + ph/2} r={Math.min(pw,ph)*0.14} fill="none" stroke={sty.stroke} strokeWidth="0.8" opacity="0.5" />
@@ -407,7 +484,7 @@ export default function Editor2D({
                         </g>
                       )}
                       {/* Cuba inner lip */}
-                      {tipo === 'cuba' && pw > 12 && (
+                      {tipo.startsWith('cuba') && pw > 12 && (
                         <rect x={px.x+3} y={px.y+3} width={pw-6} height={ph-6} fill="none" stroke={sty.stroke} strokeWidth="0.6" opacity="0.4" rx="2" style={{ pointerEvents: 'none' }} />
                       )}
                       {/* Delete hint */}
