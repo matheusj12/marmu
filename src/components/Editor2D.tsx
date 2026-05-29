@@ -264,43 +264,18 @@ export default function Editor2D({
         </div>
         <div className="flex items-center gap-2">
           {/* Mode toggle */}
-          {onCountertopChange && (
-            freeMode ? (
-              <>
-                <button
-                  onClick={addCutout}
-                  className="text-[9px] bg-orange-600 hover:bg-orange-500 text-white font-bold px-2.5 py-1 rounded border border-orange-400/30 transition-all cursor-pointer"
-                  title="Adicionar vão/recorte interno"
-                >
-                  + Vão
-                </button>
-                <button
-                  onClick={exitFreeMode}
-                  className="text-[9px] bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-2.5 py-1 rounded border border-indigo-400/30 transition-all cursor-pointer"
-                  title="Voltar ao modo retângulo"
-                >
-                  ▦ Retângulo
-                </button>
-              </>
-            ) : (
-              <button
-                onClick={enterFreeMode}
-                className="text-[9px] bg-purple-600 hover:bg-purple-500 text-white font-bold px-2.5 py-1 rounded border border-purple-400/30 transition-all cursor-pointer"
-                title="Editar forma livremente"
-              >
-                ⬡ Forma Livre
-              </button>
-            )
+          {onCountertopChange && freeMode && (
+            <button
+              onClick={addCutout}
+              className="text-[9px] bg-orange-600 hover:bg-orange-500 text-white font-bold px-2.5 py-1 rounded border border-orange-400/30 transition-all cursor-pointer"
+              title="Adicionar vão/recorte interno"
+            >
+              + Vão
+            </button>
           )}
-          {freeMode ? (
-            <span className="text-[9px] bg-purple-500/10 text-purple-400 border border-purple-500/20 font-mono px-2 py-1 rounded">
-              Arraste vértices · clique aresta p/ adicionar · 2× p/ remover
-            </span>
-          ) : (
-            <span className="text-[9px] bg-blue-500/10 text-blue-400 border border-blue-500/20 font-mono px-2 py-1 rounded">
-              ↔ Arraste as arestas
-            </span>
-          )}
+          <span className="text-[9px] bg-purple-500/10 text-purple-400 border border-purple-500/20 font-mono px-2 py-1 rounded">
+            Arraste vértices · clique aresta p/ adicionar · 2× p/ remover
+          </span>
           <span className="text-[9px] bg-white/5 text-gray-400 font-mono px-2 py-1 rounded">Cotado em cm</span>
         </div>
       </div>

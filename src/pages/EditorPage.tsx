@@ -53,7 +53,8 @@ export default function EditorPage() {
     hasCooktop: false,
     cooktopWidth: 70,
     cooktopDepth: 50,
-    cooktopX: 40
+    cooktopX: 40,
+    vertices: [{ x: 0, y: 0 }, { x: 180, y: 0 }, { x: 180, y: 60 }, { x: 0, y: 60 }],
   });
 
   // --- CONFIG STAIRCASE (Escada) ---
@@ -162,7 +163,8 @@ export default function EditorPage() {
         hasCooktop: false,
         cooktopWidth: 70,
         cooktopDepth: 50,
-        cooktopX: 40
+        cooktopX: 40,
+        vertices: [{ x: 0, y: 0 }, { x: 180, y: 0 }, { x: 180, y: 60 }, { x: 0, y: 60 }],
       });
     } else {
       setStaircase({
