@@ -92,10 +92,30 @@ export default function BancadaModel({ config, material }: BancadaModelProps) {
     const cxm = (minXm + maxXm) / 2;
     const cym = (minYm + maxYm) / 2;
 
-    // After rotation-x(-π/2): shape X→worldX, shape Y→-worldZ
-    // So: world_z = v.y/100 - cym  →  back(minY)= -polyD/2, front(maxY)= +polyD/2
-    const backZ  = -polyD / 2;
-    const frontZ =  polyD / 2;
+    // Convert polygon vertices to world coords (after rotation-x(-π/2))
+    // world_x = v.x/100 - cxm,  world_z = v.y/100 - cym
+    const vertsW = verts.map(v => ({ x: v.x / 100 - cxm, z: v.y / 100 - cym }));
+    const minZ = Math.min(...vertsW.map(v => v.z));
+    const maxZ = Math.max(...vertsW.map(v => v.z));
+    const TOL = 0.06; // 6cm snap tolerance for edge detection
+
+    // Find back edge (min Z) and front edge (max Z) vertices, sorted by X
+    const backEdgeV  = vertsW.filter(v => v.z <= minZ + TOL).sort((a, b) => a.x - b.x);
+    const frontEdgeV = vertsW.filter(v => v.z >= maxZ - TOL).sort((a, b) => a.x - b.x);
+
+    const edgeInfo = (ev: { x: number; z: number }[]) => {
+      const l = ev[0], r = ev[ev.length - 1];
+      return {
+        cx: (l.x + r.x) / 2,
+        cz: (l.z + r.z) / 2,
+        len: Math.sqrt((r.x - l.x) ** 2 + (r.z - l.z) ** 2) || 0.01,
+        angle: Math.atan2(r.z - l.z, r.x - l.x),
+        lx: l.x, lz: l.z, rx: r.x, rz: r.z,
+      };
+    };
+
+    const back  = edgeInfo(backEdgeV);
+    const front = edgeInfo(frontEdgeV);
 
     // World position of a cutout center (cm coords → meters centered)
     const cutPos = (cut: { x: number; y: number; w: number; h: number }) => ({
@@ -107,35 +127,48 @@ export default function BancadaModel({ config, material }: BancadaModelProps) {
 
     return (
       <group>
-        {/* Main slab */}
+        {/* Main slab — exact polygon */}
         <mesh geometry={customGeo} rotation-x={-Math.PI / 2} position={[0, 0, 0]} castShadow receiveShadow>
           <meshStandardMaterial {...stoneMaterialProps} side={FrontSide} />
         </mesh>
 
-        {/* Frontão traseiro — back wall */}
+        {/* Frontão — alinhado com a aresta traseira real do polígono */}
         {fh > 0 && (
-          <mesh position={[0, t + fh / 2, backZ + t / 2]} castShadow receiveShadow>
-            <boxGeometry args={[polyW, fh, t]} />
+          <mesh position={[back.cx, t + fh / 2, back.cz]} rotation={[0, -back.angle, 0]} castShadow receiveShadow>
+            <boxGeometry args={[back.len, fh, t]} />
             <meshStandardMaterial {...stoneMaterialProps} />
           </mesh>
         )}
-        {fh > 0 && config.frontaoLeft && (
-          <mesh position={[-polyW / 2 + t / 2, t + fh / 2, t / 2]} castShadow receiveShadow>
-            <boxGeometry args={[t, fh, polyD - t]} />
-            <meshStandardMaterial {...stoneMaterialProps} />
-          </mesh>
-        )}
-        {fh > 0 && config.frontaoRight && (
-          <mesh position={[polyW / 2 - t / 2, t + fh / 2, t / 2]} castShadow receiveShadow>
-            <boxGeometry args={[t, fh, polyD - t]} />
-            <meshStandardMaterial {...stoneMaterialProps} />
-          </mesh>
-        )}
+        {fh > 0 && config.frontaoLeft && (() => {
+          // Left aba: from back-left vertex downward along left edge
+          const lTop = backEdgeV[0];
+          const lBot = vertsW.reduce((c, v) => (v.x <= lTop.x + TOL && v.z > c.z ? v : c), lTop);
+          const len = Math.sqrt((lBot.x - lTop.x)**2 + (lBot.z - lTop.z)**2) || 0.01;
+          const ang = Math.atan2(lBot.z - lTop.z, lBot.x - lTop.x);
+          return (
+            <mesh position={[(lTop.x + lBot.x)/2, t + fh/2, (lTop.z + lBot.z)/2]} rotation={[0, -ang, 0]} castShadow receiveShadow>
+              <boxGeometry args={[len, fh, t]} />
+              <meshStandardMaterial {...stoneMaterialProps} />
+            </mesh>
+          );
+        })()}
+        {fh > 0 && config.frontaoRight && (() => {
+          const rTop = backEdgeV[backEdgeV.length - 1];
+          const rBot = vertsW.reduce((c, v) => (v.x >= rTop.x - TOL && v.z > c.z ? v : c), rTop);
+          const len = Math.sqrt((rBot.x - rTop.x)**2 + (rBot.z - rTop.z)**2) || 0.01;
+          const ang = Math.atan2(rBot.z - rTop.z, rBot.x - rTop.x);
+          return (
+            <mesh position={[(rTop.x + rBot.x)/2, t + fh/2, (rTop.z + rBot.z)/2]} rotation={[0, -ang, 0]} castShadow receiveShadow>
+              <boxGeometry args={[len, fh, t]} />
+              <meshStandardMaterial {...stoneMaterialProps} />
+            </mesh>
+          );
+        })()}
 
-        {/* Saia frontal — front wall */}
+        {/* Saia — alinhada com a aresta frontal real do polígono */}
         {sh > 0 && (
-          <mesh position={[0, -sh / 2, frontZ - t / 2]} castShadow receiveShadow>
-            <boxGeometry args={[polyW, sh, t]} />
+          <mesh position={[front.cx, -sh / 2, front.cz]} rotation={[0, -front.angle, 0]} castShadow receiveShadow>
+            <boxGeometry args={[front.len, sh, t]} />
             <meshStandardMaterial {...stoneMaterialProps} />
           </mesh>
         )}
