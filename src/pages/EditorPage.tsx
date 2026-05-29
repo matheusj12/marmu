@@ -314,32 +314,40 @@ export default function EditorPage() {
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
                       <label className="text-xs font-medium text-zinc-400">Largura Total</label>
-                      <span className="text-xs bg-zinc-900 border border-white/5 px-2.5 py-0.5 rounded font-mono text-blue-400">{countertop.width}cm</span>
+                      <div className="flex items-center gap-1">
+                        <input
+                          type="number" min={60} max={300} step={5}
+                          value={countertop.width}
+                          onChange={e => setCountertop({ ...countertop, width: Math.min(300, Math.max(60, Number(e.target.value))) })}
+                          className="w-16 text-xs bg-zinc-900 border border-white/10 px-2 py-0.5 rounded font-mono text-blue-400 focus:outline-none focus:border-blue-500 text-right"
+                        />
+                        <span className="text-xs text-zinc-500">cm</span>
+                      </div>
                     </div>
                     <input
-                      type="range"
-                      min={60}
-                      max={300}
-                      step={5}
-                      value={countertop.width}
+                      type="range" min={60} max={300} step={5} value={countertop.width}
                       onChange={e => setCountertop({ ...countertop, width: Number(e.target.value) })}
-                      className="w-full h-1.5 bg-zinc-805 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                      className="w-full h-1.5 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-blue-600"
                     />
                   </div>
 
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
                       <label className="text-xs font-medium text-zinc-400">Profundidade</label>
-                      <span className="text-xs bg-zinc-900 border border-white/5 px-2.5 py-0.5 rounded font-mono text-blue-400">{countertop.depth}cm</span>
+                      <div className="flex items-center gap-1">
+                        <input
+                          type="number" min={40} max={120} step={5}
+                          value={countertop.depth}
+                          onChange={e => setCountertop({ ...countertop, depth: Math.min(120, Math.max(40, Number(e.target.value))) })}
+                          className="w-16 text-xs bg-zinc-900 border border-white/10 px-2 py-0.5 rounded font-mono text-blue-400 focus:outline-none focus:border-blue-500 text-right"
+                        />
+                        <span className="text-xs text-zinc-500">cm</span>
+                      </div>
                     </div>
                     <input
-                      type="range"
-                      min={40}
-                      max={120}
-                      step={5}
-                      value={countertop.depth}
+                      type="range" min={40} max={120} step={5} value={countertop.depth}
                       onChange={e => setCountertop({ ...countertop, depth: Number(e.target.value) })}
-                      className="w-full h-1.5 bg-zinc-805 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                      className="w-full h-1.5 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-blue-600"
                     />
                   </div>
                 </div>
@@ -349,32 +357,40 @@ export default function EditorPage() {
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
                       <label className="text-xs font-medium text-zinc-400">Frontão (Espelho)</label>
-                      <span className="text-xs bg-zinc-900 border border-white/5 px-2.5 py-0.5 rounded font-mono text-blue-400">{countertop.frontaoHeight}cm</span>
+                      <div className="flex items-center gap-1">
+                        <input
+                          type="number" min={0} max={20} step={1}
+                          value={countertop.frontaoHeight}
+                          onChange={e => setCountertop({ ...countertop, frontaoHeight: Math.min(20, Math.max(0, Number(e.target.value))) })}
+                          className="w-14 text-xs bg-zinc-900 border border-white/10 px-2 py-0.5 rounded font-mono text-blue-400 focus:outline-none focus:border-blue-500 text-right"
+                        />
+                        <span className="text-xs text-zinc-500">cm</span>
+                      </div>
                     </div>
                     <input
-                      type="range"
-                      min={0}
-                      max={20}
-                      step={1}
-                      value={countertop.frontaoHeight}
+                      type="range" min={0} max={20} step={1} value={countertop.frontaoHeight}
                       onChange={e => setCountertop({ ...countertop, frontaoHeight: Number(e.target.value) })}
-                      className="w-full h-1.5 bg-zinc-805 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                      className="w-full h-1.5 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-blue-600"
                     />
                   </div>
 
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
                       <label className="text-xs font-medium text-zinc-400">Saia (Avental)</label>
-                      <span className="text-xs bg-zinc-900 border border-white/5 px-2.5 py-0.5 rounded font-mono text-blue-400">{countertop.saiaHeight}cm</span>
+                      <div className="flex items-center gap-1">
+                        <input
+                          type="number" min={0} max={15} step={1}
+                          value={countertop.saiaHeight}
+                          onChange={e => setCountertop({ ...countertop, saiaHeight: Math.min(15, Math.max(0, Number(e.target.value))) })}
+                          className="w-14 text-xs bg-zinc-900 border border-white/10 px-2 py-0.5 rounded font-mono text-blue-400 focus:outline-none focus:border-blue-500 text-right"
+                        />
+                        <span className="text-xs text-zinc-500">cm</span>
+                      </div>
                     </div>
                     <input
-                      type="range"
-                      min={0}
-                      max={15}
-                      step={1}
-                      value={countertop.saiaHeight}
+                      type="range" min={0} max={15} step={1} value={countertop.saiaHeight}
                       onChange={e => setCountertop({ ...countertop, saiaHeight: Number(e.target.value) })}
-                      className="w-full h-1.5 bg-zinc-805 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                      className="w-full h-1.5 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-blue-600"
                     />
                   </div>
                 </div>
