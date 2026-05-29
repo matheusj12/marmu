@@ -1,5 +1,5 @@
 import { useRef, useEffect, useCallback } from 'react';
-import { CountertopConfig, StaircaseConfig, ProjectType, StoneMaterial, Vertex2D } from '../types';
+import { CountertopConfig, StaircaseConfig, ProjectType, StoneMaterial, Vertex2D, Cutout2D } from '../types';
 
 interface Editor2DProps {
   type: ProjectType;
@@ -23,14 +23,10 @@ type RectDrag =
   | { type: 'sink';    startMX: number; startVal: number; scale: number; slabW: number }
   | { type: 'cooktop'; startMX: number; startVal: number; scale: number; slabW: number };
 
-type PolyDrag = {
-  type: 'vertex';
-  idx: number;
-  startMX: number;
-  startMY: number;
-  startV: Vertex2D;
-  polyScale: number;
-};
+type PolyDrag =
+  | { type: 'vertex';       idx: number; startMX: number; startMY: number; startV: Vertex2D; polyScale: number }
+  | { type: 'cutout-move';  id: number;  startMX: number; startMY: number; startC: Cutout2D; polyScale: number }
+  | { type: 'cutout-resize';id: number;  corner: 'tl'|'tr'|'br'|'bl'; startMX: number; startMY: number; startC: Cutout2D; polyScale: number };
 
 type DragState = RectDrag | PolyDrag | null;
 
@@ -109,6 +105,24 @@ export default function Editor2D({
           y: snap(d.startV.y + (y - d.startMY) / d.polyScale, SNAP),
         };
         onCountertopChange({ ...countertop, vertices: newVerts });
+      } else if (d.type === 'cutout-move') {
+        const dx = (x - d.startMX) / d.polyScale, dy = (y - d.startMY) / d.polyScale;
+        const updated = (countertop.cutouts ?? []).map(c =>
+          c.id === d.id ? { ...c, x: snap(d.startC.x + dx, SNAP), y: snap(d.startC.y + dy, SNAP) } : c
+        );
+        onCountertopChange({ ...countertop, cutouts: updated });
+      } else if (d.type === 'cutout-resize') {
+        const dx = (x - d.startMX) / d.polyScale, dy = (y - d.startMY) / d.polyScale;
+        const c = d.startC;
+        let nx = c.x, ny = c.y, nw = c.w, nh = c.h;
+        if (d.corner === 'br') { nw = Math.max(10, snap(c.w + dx, SNAP)); nh = Math.max(10, snap(c.h + dy, SNAP)); }
+        if (d.corner === 'bl') { nx = snap(c.x + dx, SNAP); nw = Math.max(10, snap(c.w - dx, SNAP)); nh = Math.max(10, snap(c.h + dy, SNAP)); }
+        if (d.corner === 'tr') { ny = snap(c.y + dy, SNAP); nw = Math.max(10, snap(c.w + dx, SNAP)); nh = Math.max(10, snap(c.h - dy, SNAP)); }
+        if (d.corner === 'tl') { nx = snap(c.x + dx, SNAP); ny = snap(c.y + dy, SNAP); nw = Math.max(10, snap(c.w - dx, SNAP)); nh = Math.max(10, snap(c.h - dy, SNAP)); }
+        const updated = (countertop.cutouts ?? []).map(ct =>
+          ct.id === d.id ? { ...ct, x: nx, y: ny, w: nw, h: nh } : ct
+        );
+        onCountertopChange({ ...countertop, cutouts: updated });
       } else if (d.type === 'width') {
         onCountertopChange({ ...countertop, width: clamp(snap(d.startVal + (x - d.startMX) / rScale, SNAP), 60, 300) });
       } else if (d.type === 'depth') {
@@ -146,6 +160,19 @@ export default function Editor2D({
     const bh = Math.max(...ys) - Math.min(...ys);
     onCountertopChange({ ...countertop, width: clamp(snap(bw, SNAP), 60, 300), depth: clamp(snap(bh, SNAP), 40, 120), vertices: null });
   };
+  const addCutout = () => {
+    if (!onCountertopChange) return;
+    const xs = verts.map(v => v.x), ys = verts.map(v => v.y);
+    const cx = snap((Math.min(...xs) + Math.max(...xs)) / 2 - 25, SNAP);
+    const cy = snap((Math.min(...ys) + Math.max(...ys)) / 2 - 20, SNAP);
+    const newCutout: Cutout2D = { id: Date.now(), x: cx, y: cy, w: 50, h: 40, label: 'Vão' };
+    onCountertopChange({ ...countertop, cutouts: [...(countertop.cutouts ?? []), newCutout] });
+  };
+  const removeCutout = (id: number) => {
+    if (!onCountertopChange) return;
+    onCountertopChange({ ...countertop, cutouts: (countertop.cutouts ?? []).filter(c => c.id !== id) });
+  };
+
   const addVertexOnEdge = (i: number) => {
     if (!onCountertopChange || !freeMode) return;
     const n = verts.length;
@@ -222,13 +249,22 @@ export default function Editor2D({
           {/* Mode toggle */}
           {onCountertopChange && (
             freeMode ? (
-              <button
-                onClick={exitFreeMode}
-                className="text-[9px] bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-2.5 py-1 rounded border border-indigo-400/30 transition-all cursor-pointer"
-                title="Voltar ao modo retângulo"
-              >
-                ▦ Retângulo
-              </button>
+              <>
+                <button
+                  onClick={addCutout}
+                  className="text-[9px] bg-orange-600 hover:bg-orange-500 text-white font-bold px-2.5 py-1 rounded border border-orange-400/30 transition-all cursor-pointer"
+                  title="Adicionar vão/recorte interno"
+                >
+                  + Vão
+                </button>
+                <button
+                  onClick={exitFreeMode}
+                  className="text-[9px] bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-2.5 py-1 rounded border border-indigo-400/30 transition-all cursor-pointer"
+                  title="Voltar ao modo retângulo"
+                >
+                  ▦ Retângulo
+                </button>
+              </>
             ) : (
               <button
                 onClick={enterFreeMode}
@@ -302,6 +338,58 @@ export default function Editor2D({
                         style={{ cursor: 'copy' }}
                         onClick={() => addVertexOnEdge(i)}
                       />
+                    </g>
+                  );
+                })}
+
+                {/* ── Cutout (vão) handles ── */}
+                {(countertop.cutouts ?? []).map(cut => {
+                  const px = toPx({ x: cut.x, y: cut.y });
+                  const pw = cut.w * polyScale, ph = cut.h * polyScale;
+                  const corners: { key: 'tl'|'tr'|'br'|'bl'; cx: number; cy: number; cursor: string }[] = [
+                    { key: 'tl', cx: px.x,       cy: px.y,       cursor: 'nwse-resize' },
+                    { key: 'tr', cx: px.x + pw,   cy: px.y,       cursor: 'nesw-resize' },
+                    { key: 'br', cx: px.x + pw,   cy: px.y + ph,  cursor: 'nwse-resize' },
+                    { key: 'bl', cx: px.x,         cy: px.y + ph,  cursor: 'nesw-resize' },
+                  ];
+                  return (
+                    <g key={`cut-${cut.id}`}>
+                      {/* Fill — clipped out visually */}
+                      <rect
+                        x={px.x} y={px.y} width={pw} height={ph}
+                        fill="#0f1115" stroke="#f97316" strokeWidth="1.5" strokeDasharray="5,3"
+                        style={{ cursor: 'move' }}
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          const { x, y } = svgCoords(e.clientX, e.clientY);
+                          drag.current = { type: 'cutout-move', id: cut.id, startMX: x, startMY: y, startC: { ...cut }, polyScale };
+                        }}
+                      />
+                      {/* Label + remove button */}
+                      <text x={px.x + pw/2} y={px.y + ph/2 - 4} textAnchor="middle" fill="#fb923c" style={{ fontSize: 9, fontWeight: 700, pointerEvents: 'none' }}>
+                        {cut.label ?? 'Vão'}
+                      </text>
+                      <text x={px.x + pw/2} y={px.y + ph/2 + 8} textAnchor="middle" fill="#64748b" style={{ fontSize: 8, pointerEvents: 'none' }}>
+                        {cut.w}×{cut.h} cm
+                      </text>
+                      {/* × remove */}
+                      <g onClick={() => removeCutout(cut.id)} style={{ cursor: 'pointer' }}>
+                        <circle cx={px.x + pw - 6} cy={px.y + 6} r={7} fill="#ef4444" opacity="0.85" />
+                        <text x={px.x + pw - 6} y={px.y + 10} textAnchor="middle" fill="#fff" style={{ fontSize: 10, fontWeight: 700, pointerEvents: 'none' }}>×</text>
+                      </g>
+                      {/* Corner resize handles */}
+                      {corners.map(co => (
+                        <circle
+                          key={co.key} cx={co.cx} cy={co.cy} r={5}
+                          fill="#f97316" stroke="#fff" strokeWidth="1" opacity="0.9"
+                          style={{ cursor: co.cursor }}
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            const { x, y } = svgCoords(e.clientX, e.clientY);
+                            drag.current = { type: 'cutout-resize', id: cut.id, corner: co.key, startMX: x, startMY: y, startC: { ...cut }, polyScale };
+                          }}
+                        />
+                      ))}
                     </g>
                   );
                 })}

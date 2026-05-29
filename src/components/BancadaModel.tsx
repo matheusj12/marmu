@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { CanvasTexture, RepeatWrapping, Shape, ExtrudeGeometry, DoubleSide } from 'three';
+import { CanvasTexture, RepeatWrapping, Shape, Path, ExtrudeGeometry, DoubleSide } from 'three';
 import { CountertopConfig, StoneMaterial } from '../types';
 import { generateStoneTexture } from '../utils/textureGenerator';
 
@@ -57,8 +57,18 @@ export default function BancadaModel({ config, material }: BancadaModelProps) {
       shape.lineTo(verts[i].x / 100 - cx, -(verts[i].y / 100 - cy));
     }
     shape.closePath();
+    // Add cutout holes
+    for (const cut of config.cutouts ?? []) {
+      const hole = new Path();
+      hole.moveTo(cut.x / 100 - cx, -(cut.y / 100 - cy));
+      hole.lineTo((cut.x + cut.w) / 100 - cx, -(cut.y / 100 - cy));
+      hole.lineTo((cut.x + cut.w) / 100 - cx, -((cut.y + cut.h) / 100 - cy));
+      hole.lineTo(cut.x / 100 - cx, -((cut.y + cut.h) / 100 - cy));
+      hole.closePath();
+      shape.holes.push(hole);
+    }
     return new ExtrudeGeometry(shape, { depth: t, bevelEnabled: false });
-  }, [config.vertices, t]);
+  }, [config.vertices, config.cutouts, t]);
 
   const stoneMaterialProps = {
     map: texture,

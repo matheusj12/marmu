@@ -16,6 +16,7 @@ export interface StoneMaterial {
 }
 
 export interface Vertex2D { x: number; y: number; } // em cm
+export interface Cutout2D { id: number; x: number; y: number; w: number; h: number; label?: string; } // vão em cm
 
 export interface CountertopConfig {
   width: number;       // em cm
@@ -36,6 +37,7 @@ export interface CountertopConfig {
   cooktopDepth: number;
   cooktopX: number;    // offset do centro em %
   vertices?: Vertex2D[] | null; // polígono livre (null = modo retângulo)
+  cutouts?: Cutout2D[];         // vãos/recortes internos
 }
 
 export interface StaircaseConfig {
