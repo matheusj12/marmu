@@ -169,96 +169,231 @@ export default function BancadaModel({ config, material }: BancadaModelProps) {
           const { wx, wz, ww, wd } = cutPos(cut);
           const tipo = cut.tipo ?? 'vao';
 
-          if (tipo.startsWith('cuba')) return (
-            <group key={cut.id} position={[wx, t, wz]}>
-              {/* Inox bowl */}
-              <mesh position={[0, -0.09, 0]} castShadow>
-                <boxGeometry args={[ww - 0.01, 0.16, wd - 0.01]} />
-                <meshStandardMaterial color="#b5babf" roughness={0.12} metalness={0.95} />
-              </mesh>
-              {/* Drain */}
-              <mesh position={[0, -0.168, 0]}>
-                <cylinderGeometry args={[0.03, 0.03, 0.005, 16]} />
-                <meshStandardMaterial color="#111" roughness={0.5} />
-              </mesh>
-              {/* Lip ring */}
-              <mesh position={[0, 0.001, 0]}>
-                <boxGeometry args={[ww + 0.02, 0.002, wd + 0.02]} />
-                <meshStandardMaterial color="#e0e4e8" roughness={0.1} metalness={0.9} />
-              </mesh>
-              {/* Faucet */}
-              <group position={[0, 0, -wd / 2 - 0.02]}>
-                <mesh position={[0, 0.08, 0]}>
-                  <cylinderGeometry args={[0.012, 0.012, 0.16]} />
-                  <meshStandardMaterial color="#dfdfdf" metalness={0.9} roughness={0.1} />
+          // ── Cuba variants ──────────────────────────────────────────────
+          if (tipo.startsWith('cuba')) {
+            const inox = { color: '#b5babf', roughness: 0.12, metalness: 0.95 };
+            const chrome = { color: '#e0e4e8', roughness: 0.1, metalness: 0.9 };
+            const pipe = { color: '#dfdfdf', metalness: 0.9, roughness: 0.1 };
+
+            if (tipo === 'cuba-esculpida') return (
+              <group key={cut.id} position={[wx, t, wz]}>
+                <mesh position={[0, -0.05, 0]} rotation={[0.25, 0, 0]}>
+                  <boxGeometry args={[ww - 0.02, 0.01, wd * 0.75]} />
+                  <meshStandardMaterial {...stoneMaterialProps} />
                 </mesh>
-                <mesh position={[0, 0.19, 0.06]} rotation={[1.2, 0, 0]}>
-                  <cylinderGeometry args={[0.01, 0.01, 0.09]} />
-                  <meshStandardMaterial color="#dfdfdf" metalness={0.9} roughness={0.1} />
+                <mesh position={[0, -0.11, wd * 0.2]}>
+                  <boxGeometry args={[ww - 0.04, 0.015, 0.04]} />
+                  <meshStandardMaterial color="#222" roughness={0.9} />
                 </mesh>
               </group>
-            </group>
-          );
+            );
 
-          if (tipo.startsWith('cooktop') || tipo === 'inducao') return (
-            <group key={cut.id} position={[wx, t + 0.002, wz]}>
-              {/* Black glass base */}
-              <mesh castShadow>
-                <boxGeometry args={[ww + 0.015, 0.004, wd + 0.015]} />
-                <meshStandardMaterial color="#0b0c10" roughness={0.05} metalness={0.9} />
-              </mesh>
-              {/* Burner rings */}
-              <group position={[0, 0.003, 0]}>
-                {[
-                  [-ww * 0.28,  wd * 0.22, 0.038, 0.043],
-                  [ ww * 0.28,  wd * 0.22, 0.033, 0.038],
-                  [-ww * 0.28, -wd * 0.22, 0.043, 0.049],
-                  [ ww * 0.28, -wd * 0.22, 0.028, 0.033],
-                ].map(([bx, bz, r1, r2], i) => (
-                  <mesh key={i} position={[bx as number, 0, bz as number]}>
-                    <ringGeometry args={[r1 as number, r2 as number, 32]} />
-                    <meshBasicMaterial color="#ffffff" opacity={0.6} transparent />
+            if (tipo === 'cuba-sobreposta') return (
+              <group key={cut.id} position={[wx, t + 0.04, wz]}>
+                <mesh position={[0, -0.04, 0]} castShadow>
+                  <boxGeometry args={[ww + 0.04, 0.08, wd + 0.04]} />
+                  <meshStandardMaterial {...inox} />
+                </mesh>
+                <mesh position={[0, 0.005, 0]}>
+                  <boxGeometry args={[ww + 0.06, 0.003, wd + 0.06]} />
+                  <meshStandardMaterial {...chrome} />
+                </mesh>
+                <mesh position={[0, -0.168, 0]}>
+                  <cylinderGeometry args={[0.025, 0.025, 0.005, 16]} />
+                  <meshStandardMaterial color="#111" roughness={0.5} />
+                </mesh>
+              </group>
+            );
+
+            if (tipo === 'cuba-dupla') return (
+              <group key={cut.id} position={[wx, t, wz]}>
+                {/* Two bowls */}
+                {[-ww * 0.25, ww * 0.25].map((bx, i) => (
+                  <group key={i} position={[bx, 0, 0]}>
+                    <mesh position={[0, -0.09, 0]} castShadow>
+                      <boxGeometry args={[ww * 0.46, 0.16, wd - 0.01]} />
+                      <meshStandardMaterial {...inox} />
+                    </mesh>
+                    <mesh position={[0, -0.168, 0]}>
+                      <cylinderGeometry args={[0.025, 0.025, 0.005, 16]} />
+                      <meshStandardMaterial color="#111" roughness={0.5} />
+                    </mesh>
+                  </group>
+                ))}
+                {/* Divider */}
+                <mesh position={[0, -0.05, 0]}>
+                  <boxGeometry args={[0.012, 0.1, wd - 0.02]} />
+                  <meshStandardMaterial {...inox} />
+                </mesh>
+                {/* Shared lip */}
+                <mesh position={[0, 0.001, 0]}>
+                  <boxGeometry args={[ww + 0.02, 0.002, wd + 0.02]} />
+                  <meshStandardMaterial {...chrome} />
+                </mesh>
+                {/* Faucet center */}
+                <group position={[0, 0, -wd / 2 - 0.02]}>
+                  <mesh position={[0, 0.09, 0]}><cylinderGeometry args={[0.013, 0.013, 0.18]} /><meshStandardMaterial {...pipe} /></mesh>
+                  <mesh position={[0, 0.2, 0.06]} rotation={[1.2, 0, 0]}><cylinderGeometry args={[0.01, 0.01, 0.09]} /><meshStandardMaterial {...pipe} /></mesh>
+                </group>
+              </group>
+            );
+
+            // cuba-simples (default)
+            return (
+              <group key={cut.id} position={[wx, t, wz]}>
+                <mesh position={[0, -0.09, 0]} castShadow>
+                  <boxGeometry args={[ww - 0.01, 0.16, wd - 0.01]} />
+                  <meshStandardMaterial {...inox} />
+                </mesh>
+                <mesh position={[0, -0.168, 0]}>
+                  <cylinderGeometry args={[0.03, 0.03, 0.005, 16]} />
+                  <meshStandardMaterial color="#111" roughness={0.5} />
+                </mesh>
+                <mesh position={[0, 0.001, 0]}>
+                  <boxGeometry args={[ww + 0.02, 0.002, wd + 0.02]} />
+                  <meshStandardMaterial {...chrome} />
+                </mesh>
+                <group position={[0, 0, -wd / 2 - 0.02]}>
+                  <mesh position={[0, 0.08, 0]}><cylinderGeometry args={[0.012, 0.012, 0.16]} /><meshStandardMaterial {...pipe} /></mesh>
+                  <mesh position={[0, 0.19, 0.06]} rotation={[1.2, 0, 0]}><cylinderGeometry args={[0.01, 0.01, 0.09]} /><meshStandardMaterial {...pipe} /></mesh>
+                </group>
+              </group>
+            );
+          }
+
+          // ── Cooktop variants ───────────────────────────────────────────
+          if (tipo.startsWith('cooktop') || tipo === 'inducao') {
+            const glass = { color: '#0b0c10', roughness: 0.05, metalness: 0.9 };
+
+            if (tipo === 'inducao') return (
+              <group key={cut.id} position={[wx, t + 0.002, wz]}>
+                <mesh castShadow><boxGeometry args={[ww + 0.015, 0.004, wd + 0.015]} /><meshStandardMaterial {...glass} /></mesh>
+                <group position={[0, 0.003, 0]}>
+                  {[[-ww*0.24, wd*0.2], [ww*0.24, wd*0.2], [-ww*0.24, -wd*0.2], [ww*0.24, -wd*0.2]].map(([bx, bz], i) => (
+                    <mesh key={i} position={[bx, 0, bz]}>
+                      <boxGeometry args={[ww * 0.38, 0.0005, wd * 0.3]} />
+                      <meshBasicMaterial color="#1a3a6e" opacity={0.8} transparent />
+                    </mesh>
+                  ))}
+                  {/* Power indicator */}
+                  <mesh position={[ww*0.42, 0, wd*0.4]}>
+                    <circleGeometry args={[0.012, 16]} />
+                    <meshBasicMaterial color="#ff3b30" />
+                  </mesh>
+                </group>
+              </group>
+            );
+
+            if (tipo === 'cooktop-2b') return (
+              <group key={cut.id} position={[wx, t + 0.002, wz]}>
+                <mesh castShadow><boxGeometry args={[ww + 0.015, 0.004, wd + 0.015]} /><meshStandardMaterial {...glass} /></mesh>
+                <group position={[0, 0.003, 0]}>
+                  {[[-ww*0.27, 0, 0.04, 0.048], [ww*0.27, 0, 0.048, 0.056]].map(([bx, bz, r1, r2], i) => (
+                    <mesh key={i} position={[bx, 0, bz as number]}>
+                      <ringGeometry args={[r1 as number, r2 as number, 32]} />
+                      <meshBasicMaterial color="#ffffff" opacity={0.6} transparent />
+                    </mesh>
+                  ))}
+                </group>
+              </group>
+            );
+
+            if (tipo === 'cooktop-5b') return (
+              <group key={cut.id} position={[wx, t + 0.002, wz]}>
+                <mesh castShadow><boxGeometry args={[ww + 0.015, 0.004, wd + 0.015]} /><meshStandardMaterial {...glass} /></mesh>
+                <group position={[0, 0.003, 0]}>
+                  {[[-ww*0.32, wd*0.25, 0.034, 0.04], [ww*0.32, wd*0.25, 0.03, 0.036],
+                    [-ww*0.32,-wd*0.25, 0.04, 0.047], [ww*0.32,-wd*0.25, 0.025, 0.03],
+                    [0, 0, 0.05, 0.06]].map(([bx, bz, r1, r2], i) => (
+                    <mesh key={i} position={[bx as number, 0, bz as number]}>
+                      <ringGeometry args={[r1 as number, r2 as number, 32]} />
+                      <meshBasicMaterial color="#ffffff" opacity={0.65} transparent />
+                    </mesh>
+                  ))}
+                </group>
+              </group>
+            );
+
+            // cooktop-4b (default)
+            return (
+              <group key={cut.id} position={[wx, t + 0.002, wz]}>
+                <mesh castShadow><boxGeometry args={[ww + 0.015, 0.004, wd + 0.015]} /><meshStandardMaterial {...glass} /></mesh>
+                <group position={[0, 0.003, 0]}>
+                  {[[-ww*0.28, wd*0.22, 0.038, 0.043], [ww*0.28, wd*0.22, 0.033, 0.038],
+                    [-ww*0.28,-wd*0.22, 0.043, 0.049], [ww*0.28,-wd*0.22, 0.028, 0.033]].map(([bx, bz, r1, r2], i) => (
+                    <mesh key={i} position={[bx as number, 0, bz as number]}>
+                      <ringGeometry args={[r1 as number, r2 as number, 32]} />
+                      <meshBasicMaterial color="#ffffff" opacity={0.6} transparent />
+                    </mesh>
+                  ))}
+                  <mesh position={[ww*0.35, 0, wd*0.38]}><boxGeometry args={[0.04, 0.001, 0.015]} /><meshStandardMaterial color="#ff3b30" emissive="#ff3b30" emissiveIntensity={0.6} /></mesh>
+                </group>
+              </group>
+            );
+          }
+
+          // ── Torneira variants ──────────────────────────────────────────
+          if (tipo.startsWith('torneira')) {
+            const base = { color: '#c8cdd2', metalness: 0.9, roughness: 0.15 };
+            const pipe = { color: '#dfdfdf', metalness: 0.9, roughness: 0.1 };
+
+            if (tipo === 'torneira-cascata') return (
+              <group key={cut.id} position={[wx, t, wz]}>
+                <mesh><cylinderGeometry args={[ww/2, ww/2, 0.008, 24]} /><meshStandardMaterial {...base} /></mesh>
+                <mesh position={[0, 0.15, 0]}><cylinderGeometry args={[0.013, 0.013, 0.28]} /><meshStandardMaterial {...pipe} /></mesh>
+                {/* Flat waterfall plate */}
+                <mesh position={[0, 0.3, 0.05]} rotation={[-0.3, 0, 0]}>
+                  <boxGeometry args={[0.055, 0.003, 0.07]} />
+                  <meshStandardMaterial color="#e8eaec" metalness={0.85} roughness={0.1} />
+                </mesh>
+              </group>
+            );
+
+            if (tipo === 'torneira-alta') return (
+              <group key={cut.id} position={[wx, t, wz]}>
+                <mesh><cylinderGeometry args={[ww/2, ww/2, 0.008, 24]} /><meshStandardMaterial {...base} /></mesh>
+                {/* Tall post */}
+                <mesh position={[0, 0.22, 0]}><cylinderGeometry args={[0.013, 0.013, 0.42]} /><meshStandardMaterial {...pipe} /></mesh>
+                {/* Long gooseneck */}
+                <mesh position={[0, 0.44, 0.08]} rotation={[1.1, 0, 0]}><cylinderGeometry args={[0.011, 0.011, 0.13]} /><meshStandardMaterial {...pipe} /></mesh>
+                <mesh position={[0, 0.43, 0.16]}><cylinderGeometry args={[0.01, 0.01, 0.05]} /><meshStandardMaterial {...pipe} /></mesh>
+                {/* Lever */}
+                <mesh position={[0.03, 0.22, 0.01]} rotation={[0, 0, 1.5]}><cylinderGeometry args={[0.005, 0.005, 0.06]} /><meshStandardMaterial color="#c0c4c8" metalness={0.8} roughness={0.2} /></mesh>
+              </group>
+            );
+
+            if (tipo === 'torneira-industrial') return (
+              <group key={cut.id} position={[wx, t, wz]}>
+                <mesh><cylinderGeometry args={[ww/2, ww/2, 0.01, 6]} /><meshStandardMaterial color="#444" metalness={0.7} roughness={0.4} /></mesh>
+                {/* Pipe post */}
+                <mesh position={[0, 0.14, 0]}><cylinderGeometry args={[0.018, 0.018, 0.26]} /><meshStandardMaterial color="#555" metalness={0.6} roughness={0.5} /></mesh>
+                {/* 90° elbow horizontal */}
+                <mesh position={[0, 0.27, 0]} rotation={[0, 0, Math.PI/2]}><cylinderGeometry args={[0.015, 0.015, 0.12]} /><meshStandardMaterial color="#555" metalness={0.6} roughness={0.5} /></mesh>
+                {/* Spout down */}
+                <mesh position={[0.06, 0.24, 0]}><cylinderGeometry args={[0.012, 0.012, 0.07]} /><meshStandardMaterial color="#555" metalness={0.6} roughness={0.5} /></mesh>
+                {/* Cross handles */}
+                {[-0.035, 0.035].map((dx, i) => (
+                  <mesh key={i} position={[dx, 0.17, 0]} rotation={[0, 0, 1.5]}>
+                    <cylinderGeometry args={[0.005, 0.005, 0.05]} />
+                    <meshStandardMaterial color="#666" metalness={0.5} roughness={0.5} />
                   </mesh>
                 ))}
               </group>
-              {/* Touch control strip */}
-              <mesh position={[ww * 0.35, 0.003, wd * 0.38]}>
-                <boxGeometry args={[0.04, 0.001, 0.015]} />
-                <meshStandardMaterial color="#ff3b30" emissive="#ff3b30" emissiveIntensity={0.6} />
-              </mesh>
-            </group>
-          );
+            );
 
-          if (tipo.startsWith('torneira')) return (
-            <group key={cut.id} position={[wx, t, wz]}>
-              {/* Base plate */}
-              <mesh>
-                <cylinderGeometry args={[ww / 2, ww / 2, 0.008, 24]} />
-                <meshStandardMaterial color="#c8cdd2" metalness={0.9} roughness={0.15} />
-              </mesh>
-              {/* Post */}
-              <mesh position={[0, 0.12, 0]}>
-                <cylinderGeometry args={[0.013, 0.013, 0.22]} />
-                <meshStandardMaterial color="#dfdfdf" metalness={0.9} roughness={0.1} />
-              </mesh>
-              {/* Neck arc */}
-              <mesh position={[0, 0.24, 0.04]} rotation={[1.1, 0, 0]}>
-                <cylinderGeometry args={[0.01, 0.01, 0.1]} />
-                <meshStandardMaterial color="#dfdfdf" metalness={0.9} roughness={0.1} />
-              </mesh>
-              <mesh position={[0, 0.25, 0.09]}>
-                <cylinderGeometry args={[0.009, 0.009, 0.04]} />
-                <meshStandardMaterial color="#dfdfdf" metalness={0.9} roughness={0.1} />
-              </mesh>
-              {/* Handle */}
-              <mesh position={[0.025, 0.12, 0.01]} rotation={[0, 0, 1.5]}>
-                <cylinderGeometry args={[0.005, 0.005, 0.05]} />
-                <meshStandardMaterial color="#c0c4c8" metalness={0.8} roughness={0.2} />
-              </mesh>
-            </group>
-          );
+            // torneira-mono (default)
+            return (
+              <group key={cut.id} position={[wx, t, wz]}>
+                <mesh><cylinderGeometry args={[ww/2, ww/2, 0.008, 24]} /><meshStandardMaterial {...base} /></mesh>
+                <mesh position={[0, 0.12, 0]}><cylinderGeometry args={[0.013, 0.013, 0.22]} /><meshStandardMaterial {...pipe} /></mesh>
+                <mesh position={[0, 0.24, 0.04]} rotation={[1.1, 0, 0]}><cylinderGeometry args={[0.01, 0.01, 0.1]} /><meshStandardMaterial {...pipe} /></mesh>
+                <mesh position={[0, 0.25, 0.09]}><cylinderGeometry args={[0.009, 0.009, 0.04]} /><meshStandardMaterial {...pipe} /></mesh>
+                <mesh position={[0.025, 0.12, 0.01]} rotation={[0, 0, 1.5]}><cylinderGeometry args={[0.005, 0.005, 0.05]} /><meshStandardMaterial color="#c0c4c8" metalness={0.8} roughness={0.2} /></mesh>
+              </group>
+            );
+          }
 
-          return null; // 'vao' → handled by shape hole, no 3D accessory
+          return null; // 'vao' + extras → handled by shape hole only
         })}
       </group>
     );

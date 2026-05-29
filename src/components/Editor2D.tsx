@@ -346,7 +346,7 @@ export default function Editor2D({
           {onCountertopChange && freeMode && (
             <div className="flex items-center gap-1">
               {GROUPS.map(g => (
-                <div key={g.key} className="relative">
+                <div key={g.key} className="relative" onMouseDown={e => e.stopPropagation()}>
                   <button
                     onClick={() => {
                       if (g.single) { addCutout('vao'); return; }
@@ -357,16 +357,16 @@ export default function Editor2D({
                     {g.label} {!g.single && (openDropdown === g.key ? '▲' : '▼')}
                   </button>
                   {!g.single && openDropdown === g.key && (
-                    <div className="absolute top-full left-0 mt-1 bg-[#1a1a22] border border-white/10 rounded-xl shadow-2xl z-50 min-w-[170px] py-1 overflow-hidden">
+                    <div className="absolute top-full left-0 mt-1 bg-[#1a1a22] border border-white/10 rounded-xl shadow-2xl z-50 min-w-[180px] py-1 overflow-hidden">
                       {(g.items as CutoutTipo[]).map(tipo => {
                         const entry = CATALOG[tipo];
                         return (
                           <button
                             key={tipo}
                             onClick={() => addCutout(tipo)}
-                            className="w-full text-left px-3 py-2 hover:bg-white/8 transition-all flex flex-col gap-0.5"
+                            className="w-full text-left px-3 py-2.5 hover:bg-white/8 transition-all flex flex-col gap-0.5 border-b border-white/5 last:border-0"
                           >
-                            <span className="text-[10px] font-bold text-zinc-200">{entry.label}</span>
+                            <span className="text-[10px] font-bold text-zinc-100">{entry.label}</span>
                             <span className="text-[9px] text-zinc-500">{entry.desc}</span>
                           </button>
                         );
